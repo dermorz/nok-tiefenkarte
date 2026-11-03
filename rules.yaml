@@ -1,0 +1,112 @@
+# Regeln aus dem NOK-Erlaubnisschein ("Jahresschein Mitglieder LAV-SH", via hejfish)
+# Stand: abgelesen November 2026 aus der hejfish-App. Bei neuem Schein abgleichen!
+# Maßgeblich ist immer der Text des gültigen Erlaubnisscheins.
+#
+# Ergänzt (ufer.py): "geometrie" legt fest, wo eine Regel liegt. Bezug ist die Kilometrierung des
+# Tiefenatlas: gewaesser "NOK" = Kanal-km, sonst die eigene km-Teilung des Bandes (z. B. Borgstedter
+# See: km 0,0 am NOK, steigt nach Westen). Grenzen als km oder als OSM-Objekt, dessen Schnittpunkt mit
+# dem Ufer die Grenze bildet. Regeln ohne geometrie werden (noch) nicht gezeichnet und im Report gelistet.
+
+quelle:
+  ausgeber: Landesangelverband Schleswig-Holstein e. V. (LAV-SH)
+  schein: Jahresschein Mitglieder LAV-SH
+  abgerufen: 2026-11
+
+geltungsbereich:
+  von_km: 1.65   # Binnenhafen Brunsbüttel
+  bis_km: 96.63  # Hochbrücke Kiel-Holtenau/Olympiabrücke, senkrechtes Lot der östlichen Außenseite
+
+# Uferbereiche, von denen aus der Fischfang NICHT erlaubt ist -> rot
+ausgenommen:
+  - id: anleger_faehren
+    text: "Anlegebrücken und Umschlagstellen, Fähranlagen und Fährzufahrten"
+    typ: kategorie
+    hinweis: Anleger/Fähren digitalisieren (z. B. aus Tiefenatlas-Basiskarte oder OSM), Puffer festlegen
+    geometrie:                      # ergänzt: Fähranleger aus OSM (route=ferry, Endpunkte am Ufer)
+      osm: {route: ferry}
+      puffer_m: 50                  # je Seite entlang des Ufers um den Anleger; PRÜFEN
+      # Anlegebrücken/Umschlagstellen: noch nicht digitalisiert
+
+  - id: brunsbuettel_haefen
+    text: "Betriebs- und Ölhafen Brunsbüttel"
+    typ: ort
+    hinweis: Hafenflächen als Polygon digitalisieren
+
+  - id: baggerloch_dueckerswisch
+    text: "Baggerloch Dückerswisch, km 20,45 bis 20,80 Nord, vom 01.04. bis 15.06."
+    typ: km
+    ufer: Nord
+    von_km: 20.45
+    bis_km: 20.80
+    zeitraum: {von: "04-01", bis: "06-15"}   # außerhalb: grün, im Zeitraum: rot
+
+  - id: gieselau_audorf_flemhude_achterwehr
+    text: >-
+      Gieselaukanal, Audorfer See beginnend an den Spitzen des Leitdammes, endend an der
+      Uferecke im Bereich des Überganges des Obereidersees mit Enge zum Südufer des
+      Audorfer Sees, Flemhuder See, Stichkanal Achterwehrer Schifffahrtskanal
+    typ: ort
+    hinweis: Mehrere Teilgebiete; Grenzpunkte (Leitdamm-Spitzen, Uferecke) von Hand setzen
+
+  - id: ruesterbergen
+    text: "von km 54,8 bis 55,2 Süd (Lotsenstation Rüsterbergen)"
+    typ: km
+    ufer: Süd
+    von_km: 54.8
+    bis_km: 55.2
+
+  - id: borgstedter_see_nord
+    text: "Nordufer des Borgstedter Sees mit Enge zwischen der Autobahnbrücke Rade und dem NOK/Schirnauer See"
+    typ: ort
+    ufer: Nord
+    hinweis: Grenzpunkte Autobahnbrücke Rade und Übergang NOK/Schirnauer See von Hand setzen und prüfen
+    geometrie:                      # ergänzt
+      gewaesser: Borgstedter-See
+      von: {osm: {bridge:name: Rader Hochbrücke}}   # Schnitt A7-Brücke mit dem Nordufer
+      bis: {km: 0.0, offen: true}   # bis zum NOK: km 0,0 und die Enge dahinter bis Bandende
+
+  - id: borgstedter_see_sued
+    text: "Südufer des Borgstedter Sees mit Enge von der westlichen Starkstromleitung über den Borgstedter See bis zum NOK/Schirnauer See"
+    typ: ort
+    ufer: Süd
+    hinweis: Grenzpunkt westliche Starkstromleitung von Hand setzen und prüfen
+    geometrie:                      # ergänzt
+      gewaesser: Borgstedter-See
+      von: {osm: {power: line}, wahl: westlichste}  # westlichste Freileitung, die das Südufer kreuzt
+      bis: {km: 0.0, offen: true}
+
+  - id: kiel_holtenau
+    text: "zwischen Hochbrücke Kiel-Holtenau (Olympiabrücke) und Schleuse Kiel-Holtenau (Nord- und Südufer)"
+    typ: ort
+    ufer: beide
+
+  - id: fischereianlagen
+    text: "Im unmittelbaren Anlagenbereich (Fischereianlagen der Erwerbsfischer) ist eine Fischereiausübung untersagt."
+    typ: nicht_kartierbar
+
+  - id: baustellen_lebendverbau_abbruch
+    text: "Ufer mit Baustellen oder mit Lebendverbau sowie abbruchgefährdete Ufer"
+    typ: nicht_kartierbar
+
+# Erlaubt, aber mit Einschränkung -> orange (zeitabhängig)
+einschraenkungen:
+  - id: kunstkoeder_zanderschonzeit_west
+    text: >-
+      Im gesamten Gewässer westlich der Fähre Sehestedt (km 1,65 bis 75,3) ist das Angeln
+      mit Kunstködern während der Zanderschonzeit verboten. Ausgenommen davon sind
+      Heringspaternoster.
+    typ: km
+    ufer: beide
+    von_km: 1.65
+    bis_km: 75.3
+    zeitraum: {von: "03-01", bis: "05-31"}   # Zanderschonzeit laut Schein
+    anzeige: "Kunstköderverbot (außer Heringspaternoster)"
+
+  - id: verpachtete_flaechen
+    text: "In Bereichen der von der WSV verpachteten oder vermieteten Land- und Wasserflächen ist die Fischereiausübung nur mit Einwilligung des Pächters oder Mieters gestattet."
+    typ: nicht_kartierbar
+
+# Immer ausgenommen, unabhängig vom Ufer
+allgemein:
+  - "Fischfang von Wasserfahrzeugen aus ist von der Erlaubnis ausgenommen."
+  - "Betreten der Betriebsanlagen (z. B. Schleusengelände, Hafenanlagen) verboten; es gilt die Wasserstraßen-Betriebsanlagenverordnung."

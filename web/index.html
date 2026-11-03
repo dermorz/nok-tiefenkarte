@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d5c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111417" media="(prefers-color-scheme: dark)">
+<title>NOK Tiefenkarte</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map" aria-label="Karte"></div>
+
+<header id="where" role="status" aria-live="polite">Lade Abschnitte …</header>
+
+<section id="readout" role="status" aria-live="polite" hidden></section>
+
+<aside id="angel-note" hidden>
+  <span class="g">■</span> nicht ausgenommen <span class="r">■</span> ausgenommen <span class="o">■</span> Einschränkung<span id="angel-date"></span><br>
+  <span class="muted">Nicht kartiert: Baustellen, Lebendverbau, Abbruchufer, Fischereianlagen, Pachtflächen. Maßgeblich ist der Erlaubnisschein, keine Gewähr.</span>
+</aside>
+
+<nav id="bar">
+  <button id="btn-follow" aria-pressed="false" title="Eigene Position folgen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="8" fill="none"/></svg>
+    <span>Folgen</span>
+  </button>
+  <button id="btn-measure" aria-pressed="false" title="Entfernung messen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z" fill="none"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg>
+    <span>Messen</span>
+  </button>
+  <button id="btn-list" title="Abschnitte">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <span>Abschnitte</span>
+  </button>
+  <button id="btn-angel" aria-pressed="false" title="Uferlinie nach Angelerlaubnis">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v10a4 4 0 0 0 8 0v-2" fill="none"/><path d="m13 13 2-2 2 2" fill="none"/><circle cx="7" cy="3" r="1"/></svg>
+    <span>Angeln</span>
+  </button>
+  <button id="btn-info" title="Hinweise und Quellen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none"/><path d="M12 11v6M12 7v.5"/></svg>
+    <span>Info</span>
+  </button>
+</nav>
+
+<dialog id="dlg-list">
+  <div class="dlg-head"><h2>Abschnitte</h2><button class="close" aria-label="Schließen">✕</button></div>
+  <label class="row-check"><input type="checkbox" id="chk-base"> Hintergrundkarte (basemap.de, nur online)</label>
+  <p id="quota" class="muted"></p>
+  <div id="sections"></div>
+</dialog>
+
+<dialog id="dlg-info">
+  <div class="dlg-head"><h2>Hinweise</h2><button class="close" aria-label="Schließen">✕</button></div>
+  <p><strong>Nicht zur Navigation.</strong> Die Karten geben die Situation zum Zeitpunkt der Messung wieder.
+    Für Richtigkeit und Vollständigkeit wird keine Gewähr übernommen.</p>
+  <p>Tiefen in Metern unter SKN (Seekartennull) laut Plankopf des jeweiligen Blatts. Antippen der Karte zeigt
+    die nächste Tiefenkote im Umkreis von 6 m.</p>
+  <h3>Quellen und Lizenzen</h3>
+  <p>Tiefenatlas Bundeswasserstraße Nord-Ostsee-Kanal, Wasserstraßen- und Schifffahrtsverwaltung des Bundes
+    (WSV), <a href="https://www.elwis.de/DE/Service/Tiefenatlas-BWaStr/Nord-Ostsee-Kanal/Nord-Ostsee-Kanal-node" target="_blank" rel="noopener">ELWIS</a>,
+    <a href="https://www.govdata.de/dl-de/zero-2-0" target="_blank" rel="noopener">Datenlizenz Deutschland – Zero – Version 2.0</a>.
+    <br><em>Die Daten wurden verändert:</em> aus den PDF-Plänen georeferenziert, nach Web-Mercator umprojiziert,
+    gekachelt, Papierweiß transparent gemacht; Tiefenkoten aus dem PDF-Text
+    extrahiert. Dabei können Lagefehler (typisch &lt; 0,5 m) und Auslassungen entstehen.</p>
+  <p>Hintergrundkarte: © GeoBasis-DE / BKG (<span id="bkg-year"></span>)
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, basemap.de.</p>
+  <h3>Angel-Layer</h3>
+  <p>Uferlinien aus dem Tiefenatlas, eingefärbt nach den Regeln des Erlaubnisscheins
+    (<span id="rules-src"></span>). Grenzpunkte teils aus OpenStreetMap: Fähranleger, Brücken, Freileitungen,
+    © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a>,
+    <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">ODbL</a>
+    (abgerufen <span id="osm-date"></span>).</p>
+  <p>Nicht kartiert (immer selbst prüfen):</p><ul id="rules-unmapped"></ul>
+  <p>Allgemein:</p><ul id="rules-general"></ul>
+  <p>Kartenbibliothek: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a> (BSD-2-Clause).</p>
+  <p class="muted">Datenstand: <span id="data-version"></span></p>
+</dialog>
+
+<dialog id="dlg-first">
+  <h2>Nicht zur Navigation</h2>
+  <p>Diese Karte bereitet den Tiefenatlas der WSV auf. Sie zeigt die Situation zum Zeitpunkt der jeweiligen
+    Messung, ohne Gewähr für Richtigkeit und Vollständigkeit.</p>
+  <form method="dialog"><button class="primary">Verstanden</button></form>
+</dialog>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

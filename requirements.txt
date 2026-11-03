@@ -1,0 +1,7 @@
+pymupdf
+numpy
+scipy
+pillow
+pyproj
+requests
+pyyaml
