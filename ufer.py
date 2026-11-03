@@ -121,9 +121,14 @@ def cmd_osm(_):
 
 
 # --------------------------------------------------------------------------- Linearreferenz
+# Bände außerhalb der Weststrecke/Oststrecke-Ordner, deren Plankopf trotzdem Kanal-km angibt
+KANAL_KM = ("NOK-Weststrecke", "Vorhaefen-Brunsbuettel", "Vorhaefen-Kiel")
+
+
 def group_of(e):
     """Bezugssystem der km: Kanal-km für Kanalblätter, sonst die km-Teilung des Bandes."""
-    return "NOK" if e["folder"] in ("Weststrecke", "Oststrecke") else re.sub(r"^\d{8}-", "", e["id"].rsplit("_p", 1)[0])
+    band = re.sub(r"^\d{8}-", "", e["id"].rsplit("_p", 1)[0])
+    return "NOK" if e["folder"] in ("Weststrecke", "Oststrecke") or band in KANAL_KM else band
 
 
 def utm(lonlat):

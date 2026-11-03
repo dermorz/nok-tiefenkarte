@@ -1,4 +1,4 @@
-/* Service Worker: App-Hülle vorab, Kacheln/Koten aus den Abschnitts-Caches (sec-*), index.json network-first. */
+/* Service Worker: App-Hülle vorab, Kacheln/Uferlinien aus den Abschnitts-Caches (sec-*), index.json network-first. */
 const SHELL = "shell-__VERSION__";
 const FILES = ["./", "index.html", "index.json", "rules.json", "app.js", "style.css", "manifest.webmanifest", "icon.svg",
   "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css"];
@@ -22,7 +22,7 @@ self.addEventListener("fetch", (e) => {
     }).catch(() => caches.match(e.request)));
     return;
   }
-  if (/\/(tiles|koten|sections|ufer)\//.test(url.pathname)) {
+  if (/\/(tiles|sections|ufer)\//.test(url.pathname)) {
     // exakte Version aus dem Cache, sonst Netz, offline notfalls ältere Version desselben Pfads
     e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).catch(() =>
       caches.match(e.request, { ignoreSearch: true }).then((old) => old || new Response("", { status: 504 })))));

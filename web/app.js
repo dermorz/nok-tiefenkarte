@@ -1,7 +1,6 @@
-/* NOK Tiefenkarte – statische Web-App. Daten: index.json, tiles/, koten/, sections/ (von tiles.py). */
+/* NOK Tiefenkarte – statische Web-App. Daten: index.json, tiles/, ufer/, sections/, rules.json (tiles.py, ufer.py). */
 "use strict";
 
-const KOTE_RADIUS = 6;          // m
 const $ = (s) => document.querySelector(s);
 const fmt = (v, d = 1) => v.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtKm = (km) => km ? `km ${fmt(km[0], km[0] % 1 ? 1 : 0)}–${fmt(km[1], km[1] % 1 ? 1 : 0)}`.replace(/,(\d)0\b/g, ",$1") : "";
@@ -13,7 +12,7 @@ const store = {
 
 const app = window.app = {
   index: null, map: null,
-  follow: false, pos: null, koten: new Map(), measure: null,
+  follow: false, pos: null, measure: null,
 };
 
 // ---------------------------------------------------------------- Geometrie (lokal eben, reicht für < 50 km)
@@ -79,7 +78,7 @@ function initMap() {
   const all = L.latLngBounds(app.index.sections.flatMap((s) => s.bounds));
   const last = store.get("view", null);
   if (last) map.setView(last.c, last.z); else map.fitBounds(all);
-  map.on("moveend", () => { store.set("view", { c: map.getCenter(), z: map.getZoom() }); updateWhere(); preloadKoten(); loadShores(); });
+  map.on("moveend", () => { store.set("view", { c: map.getCenter(), z: map.getZoom() }); updateWhere(); loadShores(); });
   app.shoreGroup = L.layerGroup();
   app.shoreLoaded = new Set();
   map.on("dragstart", () => setFollow(false));
@@ -180,48 +179,12 @@ function updateWhere() {
   el.querySelector("button").onclick = () => { setFollow(false); app.map.fitBounds(best.bounds); };
 }
 
-// ---------------------------------------------------------------- Tiefenkoten
-async function loadKoten(s) {
-  if (!s.koten) return [];
-  if (!app.koten.has(s.id)) {
-    app.koten.set(s.id, fetch(`koten/${s.id}.json?v=${app.index.version}`).then((r) => r.ok ? r.json() : [])
-      .catch(() => { app.koten.delete(s.id); return []; }));
-  }
-  return app.koten.get(s.id);
-}
-function preloadKoten() {
-  if (app.map.getZoom() < 15) return;
-  const view = app.map.getBounds();
-  for (const s of app.index.sections) if (view.intersects(s.bounds)) loadKoten(s);
-}
-async function koteAt(ll) {
-  // ponytail: linearer Scan über die Koten der Blätter am Punkt (~3000 je Blatt), Gitterindex falls zu langsam
-  const pad = KOTE_RADIUS / 111000 * 2;
-  const near = app.index.sections.filter((s) => L.latLngBounds(s.bounds).pad(0).contains(ll) ||
-    polyDist(ll, s.poly) < KOTE_RADIUS);
-  let best = null, bd = KOTE_RADIUS;
-  for (const s of near) {
-    for (const [lat, lng, depth] of await loadKoten(s)) {
-      if (Math.abs(lat - ll.lat) > pad || Math.abs(lng - ll.lng) > pad * 2) continue;
-      const d = app.map.distance(ll, [lat, lng]);
-      if (d <= bd || (best && d === bd && dateVal(s.date) > dateVal(best.s.date))) { bd = d; best = { lat, lng, depth, d, s }; }
-    }
-  }
-  return best;
-}
-
 // ---------------------------------------------------------------- Antippen / Messen
-let tapMarker = null;
 function show(html) { const r = $("#readout"); r.innerHTML = html; r.hidden = !html; }
-const depthText = (k) => k ? `<span class="big">${fmt(k.depth)} m</span> unter SKN` +
-  `<div class="muted">Kote ${fmt(k.d)} m entfernt · Messung ${k.s.date}</div>` : `<span class="muted">Keine Tiefenkote im Umkreis von ${KOTE_RADIUS} m</span>`;
 
-async function onTap(ll) {
+function onTap(ll) {
   if (app.measure) return measureTap(ll);
-  const k = await koteAt(ll);
-  tapMarker?.remove();
-  tapMarker = L.circleMarker(k ? [k.lat, k.lng] : ll, { radius: 7, color: "#d0021b", weight: 3, fill: false }).addTo(app.map);
-  show(depthText(k));
+  show("");   // Karte ist ein reiner Bildlayer; Antippen schließt nur die Info-Leiste
 }
 
 function measureTap(ll) {
@@ -231,7 +194,7 @@ function measureTap(ll) {
   else m.b = ll;
   drawMeasure();
 }
-async function drawMeasure() {
+function drawMeasure() {
   const m = app.measure;
   if (!m) return;
   m.group.clearLayers();
@@ -245,9 +208,8 @@ async function drawMeasure() {
   L.polyline([a, b], { color: "#d0021b", weight: 3, dashArray: "6 6" }).addTo(m.group);
   L.circleMarker(b, { radius: 7, color: "#d0021b", weight: 3 }).addTo(m.group);
   if (!app.pos) L.circleMarker(a, { radius: 6, color: "#d0021b" }).addTo(m.group);
-  const k = await koteAt(b);
   show(`<span class="big" data-dist="${d.toFixed(2)}">${fmtDist(d)}</span> ${app.pos ? "von deiner Position" : "zwischen den Punkten"}` +
-    (app.pos ? ` <span class="muted">(GPS ±${fmt(app.pos.acc, 0)} m)</span>` : "") + `<div>Tiefe am Ziel: ${depthText(k)}</div>`);
+    (app.pos ? ` <span class="muted">(GPS ±${fmt(app.pos.acc, 0)} m)</span>` : ""));
 }
 function toggleMeasure() {
   if (app.measure) { app.measure.group.remove(); app.measure = null; show(""); }
@@ -305,7 +267,7 @@ function renderList() {
     row.className = "sec"; row.dataset.id = s.id;
     const jump = document.createElement("button");
     jump.className = "jump";
-    jump.innerHTML = `<strong></strong><span class="muted">Messung ${s.date} · 1:${s.scale}${s.koten ? "" : " · keine Koten"}</span>`;
+    jump.innerHTML = `<strong></strong><span class="muted">Messung ${s.date} · 1:${s.scale}</span>`;
     jump.querySelector("strong").textContent = s.name.replace(/ \(Messung.*$/, "");
     jump.onclick = () => { setFollow(false); $("#dlg-list").close(); app.map.fitBounds(s.bounds); };
     const off = document.createElement("button");

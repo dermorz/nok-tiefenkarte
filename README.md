@@ -44,12 +44,10 @@ Bei einem neuen Stand auf ELWIS werden ersetzte PDFs automatisch gelöscht und d
 
 Statische App in `web/` (Leaflet im Repo, keine Drittserver außer der optionalen Hintergrundkarte
 basemap.de). `make ufer web` baut `site/`: Kacheln `tiles/plan/{z}/{x}/{y}.webp` (z10–19, Papierweiß
-transparent), Tiefenkoten `koten/<blatt>.json`, Uferlinien `ufer/<blatt>.geojson`, Offline-Manifeste
+transparent; reine Bildlayer ohne Tiefendaten), Uferlinien `ufer/<blatt>.geojson`, Offline-Manifeste
 `sections/`, `index.json`, `rules.json`. `make serve` → http://localhost:8000, `make test` (Playwright,
 mobiler Viewport, simulierte Geolocation).
 
-- **Tiefenkoten**: schwarze „d,d“-Zahlen im Rahmen, Mitte der Textbox, auf das Modellgitter des Plankopfs
-  eingerastet (Kohärenz > 0,8).
 - **Angeln**: Uferlinien (hellblau, 0,85 pt) und km-Labels aus dem PDF; km und Ufer (Nord/Süd) über die
   Achse aus den Label-Paaren. Regeln in `rules.yaml`, Grenzobjekte aus OSM (`make osm`, ODbL). Farbe
   wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen).

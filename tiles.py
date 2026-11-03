@@ -2,7 +2,6 @@
 
   site/tiles/plan/{z}/{x}/{y}.webp          XYZ-Kacheln EPSG:3857, 256 px, z10..19 (Planzeichnung,
                                             Papierweiß transparent)
-  site/koten/<blatt>.json                   Tiefenkoten [[lat, lon, tiefe], ...]
   site/sections/<blatt>.json                Offline-Manifest (Kachel-URLs + Bytes)
   site/index.json                           Abschnitte: Name, km, Messdatum, Umriss, Bounds
 
@@ -57,40 +56,8 @@ def plan_alpha(rgb):
     return np.clip((255 - rgb.min(2).astype(np.int16)) * 25, 0, 255).astype(np.uint8)
 
 
-def koten(pdf, pno, frame, fwd, mess_alpha_at, mesh):
-    """Tiefenkoten: schwarze, waagerechte Zahlen 'd,d' im Rahmen, Lage = Mitte der Textbox (liegt
-    nachweislich auf dem Modellgitter). Liefert Koten + Gitter-Kohärenz als Lagekontrolle."""
-    x0, y0, x1, y1 = frame
-    pts = []
-    for b in pymupdf.open(pdf)[pno - 1].get_text("rawdict")["blocks"]:
-        for l in b.get("lines", []):
-            if abs(l["dir"][1]) > 0.01 or l["dir"][0] < 0:
-                continue
-            spans = [s for s in l["spans"] if s["color"] == 0]
-            t = "".join(ch["c"] for s in spans for ch in s["chars"]).strip()
-            if not spans or not re.fullmatch(r"-?\d{1,2},\d", t):
-                continue
-            bx0 = min(s["bbox"][0] for s in spans); bx1 = max(s["bbox"][2] for s in spans)
-            by0 = min(s["bbox"][1] for s in spans); by1 = max(s["bbox"][3] for s in spans)
-            cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
-            if x0 < cx < x1 and y0 < cy < y1 and mess_alpha_at(cx, cy):
-                pts.append((cx, cy, float(t.replace(",", "."))))
-    if not pts:
-        return [], None
-    p = np.array(pts)
-    lon, lat = fwd(p[:, 0], p[:, 1])
-    e, n = TO_UTM.transform(lon, lat)
-    ze, zn = np.exp(2j * np.pi * e / mesh).mean(), np.exp(2j * np.pi * n / mesh).mean()
-    lattice = dict(mesh=mesh, coh=float(min(abs(ze), abs(zn))),
-                   dE=float(np.angle(ze) / 2 / np.pi * mesh), dN=float(np.angle(zn) / 2 / np.pi * mesh))
-    if lattice["coh"] > 0.8:   # auf Gitterpunkte einrasten (Textbox-Mitte streut um ~0,2 m)
-        e, n = np.round(e / mesh) * mesh, np.round(n / mesh) * mesh
-        lon, lat = UTM.transform(e, n)
-    return [[round(a, 6), round(o, 6), d] for a, o, d in zip(lat, lon, p[:, 2])], lattice
-
-
 def render_sheet(r):
-    """Rendert ein Blatt in z19-Quellkacheln (PNG, verlustfrei) für beide Layer + Koten."""
+    """Rendert ein Blatt in z19-Quellkacheln (PNG, verlustfrei)."""
     sid, pdf, pno = r["id"], Path("data/pdf") / r["pdf"], r["page"]
     out = WORK / "src" / sid
     done = out / "done.json"
@@ -105,18 +72,9 @@ def render_sheet(r):
     res = 156543.034 / 2**ZMAX * math.cos(math.radians(lat_c))
     k = s / res * 1.5                                          # px/pt, 1,5x überabgetastet
     im, (ox, oy), k = build.render(pdf, pno, inner, 72 * k)
-    rgb = np.asarray(im)
-    # Messflächen-Maske wie in der KMZ (nur noch als Filter für die Koten): Parameter bei 170 dpi
-    km = build.DPI / 72
-    small = np.asarray(im.resize((round(im.width * km / k), round(im.height * km / k)), Image.BOX))
-    m_small = build.survey_mask(small, s / km)
-    # Farbe und Alpha getrennt transformieren: Pillow rechnet RGBA vormultipliziert, dabei wird das
-    # Papierweiß (Alpha 0) schwarz - und der Messflächen-Saum würde dieses Schwarz zeigen.
-    plan_a = Image.fromarray(plan_alpha(rgb))
-    del rgb, small
-    at = lambda x, y: m_small[min(int((y - oy) * km), m_small.shape[0] - 1), min(int((x - ox) * km), m_small.shape[1] - 1)] > 0.5
-    mesh = float((re.search(r"Maschenweite\s*([\d,]+)", pymupdf.open(pdf)[pno - 1].get_text()) or [0, "2"])[1].replace(",", "."))
-    kt, lattice = koten(pdf, pno, inner, fwd, at, mesh) if r["source"] == "vector" else ([], None)
+    # Farbe und Alpha getrennt transformieren: Pillow rechnet RGBA vormultipliziert, dabei würde
+    # das Papierweiß (Alpha 0) an Kanten schwarz.
+    plan_a = Image.fromarray(plan_alpha(np.asarray(im)))
     # Kachelbereich aus dem Rahmenumriss
     cx, cy = [x0, x1, x1, x0], [y0, y0, y1, y1]
     lon, lat = fwd(np.array(cx), np.array(cy))
@@ -141,7 +99,7 @@ def render_sheet(r):
             pt.save(out / "plan" / f"{X}_{Y}.png")
             tiles.append((X, Y))
     poly = [list(map(lambda v: round(float(v), 7), fwd(px_, py_)))[::-1] for px_, py_ in zip(cx, cy)]
-    res_ = dict(id=sid, tiles=tiles, koten=kt, lattice=lattice, poly=poly)
+    res_ = dict(id=sid, tiles=tiles, poly=poly)
     out.mkdir(parents=True, exist_ok=True)
     done.write_text(json.dumps(res_))
     return res_
@@ -220,7 +178,8 @@ def main():
     print(f"gerendert: {len(rows)} Blätter in {time.time() - t0:.0f} s")
     manifests = build_tiles(rows, rendered)
     version = datetime.now().strftime("%Y%m%d%H%M")
-    for d in ("koten", "sections"):
+    shutil.rmtree(SITE / "koten", ignore_errors=True)   # Tiefenkoten entfallen (reine Bildlayer)
+    for d in ("sections",):
         shutil.rmtree(SITE / d, ignore_errors=True)
         (SITE / d).mkdir(parents=True)
     sections, total = [], 0
@@ -230,9 +189,6 @@ def main():
         files = sorted(manifests[r["id"]])
         if (SITE / "ufer" / f"{r['id']}.geojson").exists():
             files.append(f"ufer/{r['id']}.geojson")
-        if rs["koten"]:
-            (SITE / "koten" / f"{r['id']}.json").write_text(json.dumps(rs["koten"], separators=(",", ":")))
-            files.append(f"koten/{r['id']}.json")
         size = sum((SITE / f).stat().st_size for f in files)
         total += size
         (SITE / "sections" / f"{r['id']}.json").write_text(json.dumps(dict(files=files, bytes=size)))
@@ -240,11 +196,9 @@ def main():
         sections.append(dict(id=r["id"], name=build.name_of(r), folder=build.folder_of(r), km=r["km"],
                              date=r["date"], date_last=r.get("date_last"), scale=r["scale"],
                              poly=rs["poly"], bounds=[[min(lats), min(lons)], [max(lats), max(lons)]],
-                             koten=len(rs["koten"]), ufer=(SITE / "ufer" / f"{r['id']}.geojson").exists(),
+                             ufer=(SITE / "ufer" / f"{r['id']}.geojson").exists(),
                              bytes=size, files=len(files)))
-        lat = rs["lattice"]
-        print(f"{r['id']:34s} {len(files):6d} Dateien {size / 1e6:7.1f} MB  Koten {len(rs['koten']):6d}"
-              + (f"  Gitter {lat['mesh']:g} m: Kohärenz {lat['coh']:.2f}, Versatz E {lat['dE']:+.2f} N {lat['dN']:+.2f} m" if lat else "  (keine Koten)"))
+        print(f"{r['id']:34s} {len(files):6d} Dateien {size / 1e6:7.1f} MB")
     (SITE / "index.json").write_text(json.dumps(dict(version=version, zmin=ZMIN, zmax=ZMAX, sections=sections),
                                                 ensure_ascii=False, separators=(",", ":")))
     for layer in ("plan",):
