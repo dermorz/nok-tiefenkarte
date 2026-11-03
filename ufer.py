@@ -4,7 +4,8 @@
     python ufer.py osm                  # data/osm/nok.json: Fähren, Brücken, Freileitungen (Overpass, ODbL)
     python ufer.py build [--only X]     # site/ufer.geojson + site/rules.json
 
-PDF-Ebenen (geprüft an NOK-74-76, Borgstedter See): Uferlinie = hellblau (0.286, 0.608, 0.996) 0,85 pt;
+PDF-Ebenen (geprüft an NOK-74-76, Borgstedter See): Uferlinie = hellblau (0.286, 0.608, 0.996) 0,85 pt
+(NOK-80-82/82-83: petrol 1,41 pt);
 Kanalachse = dunkelblau (0, 0, 0.753); km-Linien = Beschriftung "dd,ddd" je Ufer.
 """
 import argparse, json, math, re, sys
@@ -18,7 +19,8 @@ import requests
 import build
 from tiles import sheet_model, TO_UTM, UTM
 
-SHORE = (0.286, 0.608, 0.996)
+SHORE = [((0.286, 0.608, 0.996), 0.85),   # Standard-Zeichenvorlage
+         ((0.169, 0.541, 0.682), 1.41)]   # NOK-80-82, NOK-82-83 (andere Basiskarte)
 AXIS = (0.0, 0.0, 0.753)
 OUT = Path("out/ufer")
 OSM = Path("data/osm/nok.json")
@@ -63,7 +65,7 @@ def extract(r):
     for d in pg.get_drawings():
         if d["type"] != "s":
             continue
-        if close(d.get("color"), SHORE) and abs((d.get("width") or 0) - 0.85) < 0.1:
+        if any(close(d.get("color"), c) and abs((d.get("width") or 0) - w) < 0.1 for c, w in SHORE):
             shore += flatten(d["items"])
         elif close(d.get("color"), AXIS):
             axis += flatten(d["items"])

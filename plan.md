@@ -3,7 +3,7 @@
 Stand: 03.11.2026. Später als GitHub-Issues anlegen.
 
 ## Jetzt
-- [ ] Uferlinien für NOK-80-82 und NOK-82-83 (keine Uferlinie in der erwarteten Farbe/Strichstärke gefunden)
+- [x] Uferlinien für NOK-80-82 und NOK-82-83: andere Zeichenvorlage (Ufer petrol, 1,41 pt), ergänzt
 - [ ] Vollausbau: `make ufer web` für alle 49 Blätter, QA (Linienversatz benachbarter Blätter,
       Vorschauen, Angel-Übersicht), Playwright gegen den vollen Datensatz
 - [ ] Hosting auf GitHub Pages: Repo anlegen, `site/` lokal bauen und auf `gh-pages` veröffentlichen
