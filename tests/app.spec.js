@@ -117,4 +117,13 @@ test.describe("ohne GPS", () => {
     const shown = Number(await page.locator("#readout [data-dist]").getAttribute("data-dist"));
     expect(Math.abs(shown - 50)).toBeLessThan(0.6);   // 30 m N, 40 m O
   });
+  test("Info zeigt die einheitliche Tiefenlegende", async ({ page }) => {
+    await open(page);
+    await page.tap("#btn-info");
+    const items = page.locator("#legend li");
+    await expect(items).toHaveCount(18);
+    await expect(items.first()).toHaveText("< 0 m");
+    await expect(items.nth(11)).toHaveText("10–11 m");
+    await expect(items.last()).toHaveText("> 16 m");
+  });
 });

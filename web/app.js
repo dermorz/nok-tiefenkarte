@@ -341,6 +341,16 @@ async function main() {
     $("#where").textContent = "Keine Daten – bitte einmal online öffnen.";
     return;
   }
+  let lo = null;  // Legende: [Obergrenze m | null, Farbe], 1-m-Stufen
+  $("#legend").replaceChildren(...app.index.legend.map(([hi, c]) => {
+    const li = document.createElement("li");
+    const sw = document.createElement("i");
+    sw.style.background = `#${c}`;
+    li.append(sw);
+    li.append(lo === null ? `< ${hi} m` : hi === null ? `> ${lo} m` : `${lo}–${hi} m`);
+    lo = hi;
+    return li;
+  }));
   $("#data-version").textContent = app.index.version.replace(/(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)/, "$3.$2.$1 $4:$5");
   initMap();
   updateWhere();

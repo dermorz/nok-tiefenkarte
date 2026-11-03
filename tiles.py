@@ -61,7 +61,8 @@ def render_sheet(r):
     sid, pdf, pno = r["id"], Path("data/pdf") / r["pdf"], r["page"]
     out = WORK / "src" / sid
     done = out / "done.json"
-    newest = max((WORK.parent / "sheets" / f"{sid}.json").stat().st_mtime, Path(__file__).stat().st_mtime)
+    newest = max((WORK.parent / "sheets" / f"{sid}.json").stat().st_mtime, Path(__file__).stat().st_mtime,
+                 Path(build.__file__).stat().st_mtime)
     if done.exists() and done.stat().st_mtime > newest:
         return json.loads(done.read_text())
     shutil.rmtree(out, ignore_errors=True)
@@ -71,7 +72,7 @@ def render_sheet(r):
     lon_c, lat_c = fwd((x0 + x1) / 2, (y0 + y1) / 2)
     res = 156543.034 / 2**ZMAX * math.cos(math.radians(lat_c))
     k = s / res * 1.5                                          # px/pt, 1,5x überabgetastet
-    im, (ox, oy), k = build.render(pdf, pno, inner, 72 * k)
+    im, (ox, oy), k = build.render(pdf, pno, inner, 72 * k, s)
     # Farbe und Alpha getrennt transformieren: Pillow rechnet RGBA vormultipliziert, dabei würde
     # das Papierweiß (Alpha 0) an Kanten schwarz.
     plan_a = Image.fromarray(plan_alpha(np.asarray(im)))
@@ -199,7 +200,8 @@ def main():
                              ufer=(SITE / "ufer" / f"{r['id']}.geojson").exists(),
                              bytes=size, files=len(files)))
         print(f"{r['id']:34s} {len(files):6d} Dateien {size / 1e6:7.1f} MB")
-    (SITE / "index.json").write_text(json.dumps(dict(version=version, zmin=ZMIN, zmax=ZMAX, sections=sections),
+    (SITE / "index.json").write_text(json.dumps(dict(version=version, zmin=ZMIN, zmax=ZMAX, legend=build.DEPTH_SCALE,
+                                                     sections=sections),
                                                 ensure_ascii=False, separators=(",", ":")))
     for layer in ("plan",):
         b = sum(f.stat().st_size for f in (SITE / "tiles" / layer).rglob("*.webp"))

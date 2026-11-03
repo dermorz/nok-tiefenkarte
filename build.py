@@ -14,7 +14,7 @@ import pymupdf
 import requests
 from PIL import Image
 from pyproj import Transformer
-from scipy import ndimage, optimize
+from scipy import interpolate, ndimage, optimize
 
 Image.MAX_IMAGE_PIXELS = None
 PAGE = "https://www.elwis.de/DE/Service/Tiefenatlas-BWaStr/Nord-Ostsee-Kanal/Nord-Ostsee-Kanal-node"
@@ -249,18 +249,157 @@ def qa(f, corners):
     return rms, cmax, "PRÜFEN: zu wenige Passpunkte"
 
 
-# --------------------------------------------------------------------------- Raster + Maske
-def render(pdf, pno, frame, dpi):
+# --------------------------------------------------------------------------- Tiefenfarben
+# Die Bände haben fünf verschiedene Legenden (Kanal 8 Klassen, Weststrecke, Seen, Kiel, Obereider).
+# Einheitlich: Tiefenflächen aus dem PDF weiß zeichnen (Linien/Zahlen bleiben), Tiefe aus den
+# Tiefenkoten interpolieren und mit einer Skala neu einfärben. Die Klasse allein aus der Farbe zu
+# bestimmen geht nicht: durch die Schummerung sind Kanal-Klassen zu ~38 % nicht unterscheidbar.
+# Skala = Seen-Legende, 1-m-Stufen. (Obergrenze der Stufe in m, Farbe)
+DEPTH_SCALE = [(0, "ff9f9f"), (1, "fdbcb0"), (2, "fdceb0"), (3, "fde2b0"), (4, "fdf3b4"), (5, "f3fdb8"),
+               (6, "dbfdbb"), (7, "bcffba"), (8, "b0fdc8"), (9, "b8fde8"), (10, "b0fdf7"), (11, "b9f1fd"),
+               (12, "c5e1ff"), (13, "b7dbff"), (14, "9bcdff"), (15, "abb4fd"), (16, "d1c1ff"), (None, "c2adff")]
+PAL = np.array([[int(c[i:i + 2], 16) for i in (0, 2, 4)] for _, c in DEPTH_SCALE], np.float32)
+EDGES = np.array([d for d, _ in DEPTH_SCALE[:-1]], np.float32)
+FILL = re.compile(r"(\d*\.?\d+) (\d*\.?\d+) (\d*\.?\d+) rg (\d*\.?\d+) (\d*\.?\d+) (\d*\.?\d+) RG")
+
+
+def legend_colors(page):
+    """Grundfarben der Blattlegende: Farbspalte neben den 'x,xx m'-Labels unter 'Tiefe unter SKN'.
+    None, wenn keine Legende im Text (gescannte Bände)."""
+    W, H = page.rect.width, page.rect.height
+    words = page.get_text("words")
+    h = next((w for w in words if w[4] == "SKN" and w[0] > W * .75 and w[1] < H * .6), None)
+    ms = [(w[1] + w[3]) / 2 for w in words if w[4] == "m"]
+    labs = h and [w for w in words if re.fullmatch(r"-?\d+,\d\d", w[4]) and h[3] < w[1] < h[3] + 600
+                  and h[0] - 140 < w[0] < h[0] and any(abs((w[1] + w[3]) / 2 - y) < 2 for y in ms)]
+    if not labs:
+        return None
+    xr, yl = max(w[2] for w in labs), max(w[3] for w in labs)
+    pix = page.get_pixmap(clip=pymupdf.Rect(xr + 20, h[3] + 2, xr + 40, yl + 80), dpi=144)
+    runs = []
+    for r in range(pix.height):
+        c = pix.pixel(pix.width // 2, r)
+        if runs and max(abs(a - b) for a, b in zip(c, runs[-1][1])) <= 2:
+            runs[-1][0] += 1
+        else:
+            runs.append([1, c])
+    skip = {(255, 255, 255), (0, 0, 0), runs[0][1]}          # erster Lauf: Hintergrund des Kastens
+    return np.array(sorted({c for n, c in runs if n >= 5 and c not in skip}), np.float32)
+
+
+def is_depth(rgb, base, tol=1.5):
+    """Schummerung: Legendenfarbe b aufgehellt (b + t(255-b)) oder abgedunkelt (b(1+t))."""
+    c, u = np.asarray(rgb, np.float32), 255 - base
+    tl = np.clip(((c - base) * u).sum(1) / np.maximum((u * u).sum(1), 1e-9), 0, None)
+    td = np.clip(((c - base) * base).sum(1) / (base * base).sum(1), None, 0)
+    r = np.minimum(np.abs(base + tl[:, None] * u - c).max(1), np.abs(base * (1 + td[:, None]) - c).max(1))
+    return bool(r.min() < tol)
+
+
+def soundings(page):
+    """Tiefenkoten: schwarze, waagerechte 'd,d', Lage = Mitte der Textbox (liegt auf dem Modellgitter)."""
+    pts = []
+    for b in page.get_text("rawdict")["blocks"]:
+        for l in b.get("lines", []):
+            if abs(l["dir"][1]) > 0.01 or l["dir"][0] < 0:
+                continue
+            sp = [s for s in l["spans"] if s["color"] == 0]
+            t = "".join(ch["c"] for s in sp for ch in s["chars"]).strip()
+            if sp and re.fullmatch(r"-?\d{1,2},\d", t):
+                bb = np.array([s["bbox"] for s in sp])
+                pts.append(((bb[:, 0].min() + bb[:, 2].max()) / 2, (bb[:, 1].min() + bb[:, 3].max()) / 2,
+                            float(t.replace(",", "."))))
+    return np.array(pts).reshape(-1, 3)
+
+
+def depth_variant(pdf, pno, base, rgb, out):
+    """Einseitiges PDF, in dem alle Tiefenflächen die Farbe rgb haben. Liefert die Zahl ersetzter Farben."""
+    d = pymupdf.open(pdf)
+    d.select([pno - 1])
+    p = d[0]
+    xrefs = p.get_contents()
+    s = p.read_contents().decode("latin1")
+    memo, repl = {}, "{0} {1} {2} rg {0} {1} {2} RG".format(*rgb)
+    def sub(m):
+        a = m.groups()
+        if a[:3] != a[3:]:
+            return m.group(0)
+        if a[:3] not in memo:
+            memo[a[:3]] = is_depth([float(x) * 255 for x in a[:3]], base)
+        return repl if memo[a[:3]] else m.group(0)
+    s = FILL.sub(sub, s)
+    d.update_stream(xrefs[0], s.encode("latin1"))
+    for x in xrefs[1:]:
+        d.update_stream(x, b"")
+    d.save(out)
+    return sum(memo.values())
+
+
+def ppm(pdf, pno, frame, k, out):
     x0, y0, x1, y1 = frame
+    subprocess.run(["pdftoppm", "-f", str(pno), "-l", str(pno), "-r", str(72 * k),
+                    "-x", str(int(x0 * k)), "-y", str(int(y0 * k)),
+                    "-W", str(math.ceil((x1 - x0) * k)), "-H", str(math.ceil((y1 - y0) * k)),
+                    "-png", "-singlefile", str(pdf), out], check=True)
+    im = Image.open(out + ".png").convert("RGB")
+    im.load()
+    return im
+
+
+def recolor(pdf, pno, frame, k, s, td):
+    """Rahmen mit einheitlichen Tiefenfarben; None, wenn das Blatt keine Vektor-Legende/Koten hat."""
+    page = pymupdf.open(pdf)[pno - 1]
+    base, kot = legend_colors(page), soundings(page)
+    if base is None or len(kot) < 10:
+        return None
+    if not depth_variant(pdf, pno, base, (1, 1, 1), f"{td}/w.pdf"):
+        return None
+    depth_variant(pdf, pno, base, (1, 0, 1), f"{td}/m.pdf")
+    ox, oy = int(frame[0] * k) / k, int(frame[1] * k) / k
+    px_m = s / k
+    M = np.asarray(ppm(f"{td}/m.pdf", 1, frame, k, f"{td}/m"))
+    mask = (M[..., 1] < 100) & (M[..., 0] > 150) & (M[..., 2] > 150)       # magenta = Tiefenfläche
+    del M
+    lab, n = ndimage.label(~mask)                                          # Löcher unter Zahlen/Linien
+    mask |= np.r_[False, np.bincount(lab.ravel())[1:] * px_m ** 2 < 25][lab]
+    del lab
+    # Tiefe auf ~0,5-m-Gitter aus den Koten (linear, außerhalb der Hülle nächster Punkt)
+    H, W = mask.shape
+    f = max(1, round(0.5 / px_m))
+    gy, gx = np.mgrid[0:H:f, 0:W:f]
+    P = np.c_[(kot[:, 0] - ox) * k, (kot[:, 1] - oy) * k]
+    dep = interpolate.LinearNDInterpolator(P, kot[:, 2])(gx, gy)
+    nan = np.isnan(dep)
+    dep[nan] = interpolate.NearestNDInterpolator(P, kot[:, 2])(gx[nan], gy[nan])
+    dep = dep.astype(np.float32)
+    # Schummerung, Licht von NW 45°: >0 aufhellen, <0 abdunkeln (wie im Original). Modell auf ~3 m
+    # geglättet, sonst zeichnen sich die Dreiecke der Koten-Interpolation ab.
+    dy, dx = np.gradient(-ndimage.gaussian_filter(dep, 3 / (f * px_m)), f * px_m)
+    slope, aspect = np.arctan(np.hypot(dx, dy)), np.arctan2(dy, -dx)
+    alt, az = math.radians(45), math.radians(315)
+    hs = math.sin(alt) * np.cos(slope) + math.cos(alt) * np.sin(slope) * np.cos(az - aspect)
+    shade = np.clip(hs - math.sin(alt), -0.15, 0.35).astype(np.float32)
+    up = lambda a: np.asarray(Image.fromarray(a).resize((gx.shape[1] * f, gx.shape[0] * f), Image.BILINEAR))[:H, :W]
+    dep, shade = up(dep), up(shade)
+    out = np.array(ppm(f"{td}/w.pdf", 1, frame, k, f"{td}/w"))             # Linien auf Weiß
+    for r in range(0, H, 512):                                             # zeilenweise: Speicher
+        sl = slice(r, r + 512)
+        c = PAL[np.searchsorted(EDGES, dep[sl], side="right")]
+        t = shade[sl][..., None]
+        c = np.where(t > 0, c + t * (255 - c), c * (1 + t))
+        c = np.where(mask[sl][..., None], c, 255)
+        out[sl] = (c * out[sl] / 255).astype(np.uint8)                     # multiplizieren
+    return Image.fromarray(out)
+
+
+def render(pdf, pno, frame, dpi, s):
+    """Rahmen rendern; Vektorblätter mit einheitlichen Tiefenfarben (s = m pro pt)."""
     k = dpi / 72
     with tempfile.TemporaryDirectory() as td:
-        subprocess.run(["pdftoppm", "-f", str(pno), "-l", str(pno), "-r", str(dpi),
-                        "-x", str(int(x0 * k)), "-y", str(int(y0 * k)),
-                        "-W", str(math.ceil((x1 - x0) * k)), "-H", str(math.ceil((y1 - y0) * k)),
-                        "-png", "-singlefile", str(pdf), f"{td}/p"], check=True)
-        im = Image.open(f"{td}/p.png").convert("RGB")
-        im.load()
-    return im, (int(x0 * k) / k, int(y0 * k) / k), k
+        im = recolor(pdf, pno, frame, k, s, td)
+        if im is None:
+            im = ppm(pdf, pno, frame, k, f"{td}/p")
+    return im, (int(frame[0] * k) / k, int(frame[1] * k) / k), k
 
 
 def survey_mask(rgb, px_m):
@@ -287,7 +426,7 @@ def georaster(pdf, pno, frame, s, p, res_m):
     """Rendert den Rahmen, maskiert und warpt nordausgerichtet auf ein Lon/Lat-Gitter.
     Pro Kachel (≤ TILE px) eine eigene Affine Ausgabepixel -> Seitenpixel, gefittet an exakt
     (pyproj) transformierten Punkten; so bleibt das Residuum auch bei langen Blättern klein."""
-    im, (ox, oy), k = render(pdf, pno, frame, 2 * DPI)            # 2x überabtasten für den Warp
+    im, (ox, oy), k = render(pdf, pno, frame, 2 * DPI, s)         # 2x überabtasten für den Warp
     small = np.asarray(im.resize((im.width // 2, im.height // 2), Image.BOX))
     alpha = survey_mask(small, s / (k / 2))
     alpha = Image.fromarray((alpha * 255).astype(np.uint8)).resize(im.size, Image.BILINEAR)

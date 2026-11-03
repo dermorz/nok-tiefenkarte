@@ -35,6 +35,12 @@ Bei einem neuen Stand auf ELWIS werden ersetzte PDFs automatisch gelöscht und d
 - **QA**: Tick-RMS < 0,3 m, Eckwerte < 2,5 m (auf 0,1" gerundet), Kachel-Affine < 0,2 m.
   `OK (Ecken)`: eine Gitterrichtung hat keine Ticks und stützt sich nur auf die Eckwerte (~1–2 m).
   Blätter, die das nicht schaffen, kommen nicht in die KMZ, sondern stehen im Report.
+- **Tiefenfarben**: Die Bände haben fünf verschiedene Legenden (Kanal 8 Klassen, Weststrecke, Seen,
+  Kiel, Obereider). Einheitlich neu eingefärbt (`DEPTH_SCALE`, 1-m-Stufen 0–16 m = Seen-Legende): die
+  Tiefenflächen werden im PDF-Inhaltsstrom weiß gesetzt (Linien, Zahlen bleiben), die Tiefe wird aus den
+  Tiefenkoten linear interpoliert, eingefärbt, geschummert und mit der Planzeichnung multipliziert. Aus
+  der Farbe allein geht es nicht: durch die Schummerung sind Kanal-Klassen zu ~38 % nicht eindeutig.
+  Gescannte Bände behalten die Originalfarben.
 - **Raster**: Rahmen mit pdftoppm, ~0,3 m/px (1:2000), Maske „farbig & hell“ (Sättigung > 22,
   Helligkeit > 150), Opening ×4 gegen Linien der Basiskarte, Closing, Löcher füllen, kleine
   Komponenten weg, 3 m Dilatation, 1 m weicher Rand. Warp je Kachel (≤ 4096 px) nach Lon/Lat,
