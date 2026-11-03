@@ -29,7 +29,7 @@ test("Sehestedt: Fähre rot, westlich in der Zanderschonzeit orange, sonst grün
 test("Borgstedter See: Nordufer östlich A7 und Südufer östlich der westlichen Leitung rot", async ({ page }) => {
   const fs = await statuses(page, "2027-07-01", "20250703-Borgstedter-See_p7");
   expect(at(fs, "Nord", 1.0).st).toBe("rot");
-  expect(at(fs, "Nord", 2.5).st).toBe("gruen");    // westlich der Rader Hochbrücke (km 2,12)
+  expect(at(fs, "Nord", 2.4).st).toBe("gruen");    // westlich der Rader Hochbrücke (km 2,12), zwischen den Stegen
   expect(at(fs, "Süd", 1.0).st).toBe("rot");
   expect(at(fs, "Süd", 1.8).st).toBe("gruen");     // westlich der Leitung (km 1,57)
 });

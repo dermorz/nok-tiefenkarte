@@ -36,8 +36,9 @@ Bei einem neuen Stand auf ELWIS werden ersetzte PDFs automatisch gelöscht und d
   `OK (Ecken)`: eine Gitterrichtung hat keine Ticks und stützt sich nur auf die Eckwerte (~1–2 m).
   Blätter, die das nicht schaffen, kommen nicht in die KMZ, sondern stehen im Report.
 - **Tiefenfarben**: Die Bände haben fünf verschiedene Legenden (Kanal 8 Klassen, Weststrecke, Seen,
-  Kiel, Obereider). Einheitlich neu eingefärbt (`DEPTH_SCALE`, 1-m-Stufen 0–16 m = Seen-Legende): die
-  Tiefenflächen werden im PDF-Inhaltsstrom weiß gesetzt (Linien, Zahlen bleiben), die Tiefe wird aus den
+  Kiel, Obereider). Einheitlich neu eingefärbt (`DEPTH_SCALE`, 1-m-Stufen 0–16 m, Farbton rot → violett,
+  Helligkeit wechselt je Meter, damit Kolke/Rinnen auffallen): die
+  Tiefenflächen werden im PDF-Inhaltsstrom weiß gesetzt (`rg` bzw. ICC-`scn`) (Linien, Zahlen bleiben), die Tiefe wird aus den
   Tiefenkoten linear interpoliert, eingefärbt, geschummert und mit der Planzeichnung multipliziert. Aus
   der Farbe allein geht es nicht: durch die Schummerung sind Kanal-Klassen zu ~38 % nicht eindeutig.
   Gescannte Bände behalten die Originalfarben.
@@ -55,7 +56,8 @@ transparent; reine Bildlayer ohne Tiefendaten), Uferlinien `ufer/<blatt>.geojson
 mobiler Viewport, simulierte Geolocation).
 
 - **Angeln**: Uferlinien (hellblau, 0,85 pt) und km-Labels aus dem PDF; km und Ufer (Nord/Süd) über die
-  Achse aus den Label-Paaren. Regeln in `rules.yaml`, Grenzobjekte aus OSM (`make osm`, ODbL). Farbe
+  Achse aus den Label-Paaren. Regeln in `rules.yaml`, Grenzobjekte aus OSM (`make osm`, ODbL): Brücken/Leitungen als Grenzpunkte,
+  Fähren (Endpunkte), Stege, Hafen- und Werftflächen als `objekte` (berührte Uferstücke ± Puffer). Farbe
   wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen).
 
 Offene Punkte: `plan.md`.

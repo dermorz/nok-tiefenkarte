@@ -22,15 +22,26 @@ ausgenommen:
     text: "Anlegebrücken und Umschlagstellen, Fähranlagen und Fährzufahrten"
     typ: kategorie
     hinweis: Anleger/Fähren digitalisieren (z. B. aus Tiefenatlas-Basiskarte oder OSM), Puffer festlegen
-    geometrie:                      # ergänzt: Fähranleger aus OSM (route=ferry, Endpunkte am Ufer)
-      osm: {route: ferry}
-      puffer_m: 50                  # je Seite entlang des Ufers um den Anleger; PRÜFEN
-      # Anlegebrücken/Umschlagstellen: noch nicht digitalisiert
+    geometrie:                      # ergänzt: Objekte aus OSM, je berührtem Uferstück ± puffer_m
+      objekte:
+        # Fähranlagen/Fährzufahrt: Endpunkte der Fährlinie am Ufer. Die Fährbuchten sind je Seite
+        # ~100–300 m lang (Abgleich hejfish), 90 m je Richtung deckt die meisten ab. PRÜFEN
+        - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90}
+        # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren
+        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10}
+        # Umschlagstellen: Hafen- und Werftflächen (Rendsburg Kreishafen, Nobiskrug, Saatsee …)
+        - {osm: {landuse: harbour}, puffer_m: 10}
+        - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}
+        # Dalben (Liegestellen in den Weichen) stehen im Wasser, das Ufer dahinter bleibt frei
 
   - id: brunsbuettel_haefen
     text: "Betriebs- und Ölhafen Brunsbüttel"
     typ: ort
     hinweis: Hafenflächen als Polygon digitalisieren
+    geometrie:                      # ergänzt: Hafen-/Industrieflächen und Anleger aus OSM bis km 6,5
+      objekte:
+        - {osm: {landuse: [harbour, industrial]}, km: [0, 6.5], puffer_m: 20}
+        - {osm: {man_made: pier}, km: [0, 6.5], abstand_m: 15, puffer_m: 20}
 
   - id: baggerloch_dueckerswisch
     text: "Baggerloch Dückerswisch, km 20,45 bis 20,80 Nord, vom 01.04. bis 15.06."

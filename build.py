@@ -254,13 +254,16 @@ def qa(f, corners):
 # Einheitlich: Tiefenflächen aus dem PDF weiß zeichnen (Linien/Zahlen bleiben), Tiefe aus den
 # Tiefenkoten interpolieren und mit einer Skala neu einfärben. Die Klasse allein aus der Farbe zu
 # bestimmen geht nicht: durch die Schummerung sind Kanal-Klassen zu ~38 % nicht unterscheidbar.
-# Skala = Seen-Legende, 1-m-Stufen. (Obergrenze der Stufe in m, Farbe)
-DEPTH_SCALE = [(0, "ff9f9f"), (1, "fdbcb0"), (2, "fdceb0"), (3, "fde2b0"), (4, "fdf3b4"), (5, "f3fdb8"),
-               (6, "dbfdbb"), (7, "bcffba"), (8, "b0fdc8"), (9, "b8fde8"), (10, "b0fdf7"), (11, "b9f1fd"),
-               (12, "c5e1ff"), (13, "b7dbff"), (14, "9bcdff"), (15, "abb4fd"), (16, "d1c1ff"), (None, "c2adff")]
+# Skala: 1-m-Stufen, Farbton von Rot (flach) über Grün nach Violett (tief), Helligkeit wechselt je Meter,
+# damit auch benachbarte Stufen (Kolke, Rinnen) klar zu unterscheiden sind. (OKLCH, C 0,115, L 0,87/0,77)
+# (Obergrenze der Stufe in m, Farbe)
+DEPTH_SCALE = [(0, "ffb5b5"), (1, "f49980"), (2, "ffbf8c"), (3, "e4a75e"), (4, "f6cf78"), (5, "c2b75b"),
+               (6, "ccdf87"), (7, "94c579"), (8, "99eaaf"), (9, "5fcca6"), (10, "6fedde"), (11, "41cad2"),
+               (12, "70e7ff"), (13, "61c0f2"), (14, "9adaff"), (15, "93b2fe"), (16, "cacaff"), (None, "bfa3f3")]
 PAL = np.array([[int(c[i:i + 2], 16) for i in (0, 2, 4)] for _, c in DEPTH_SCALE], np.float32)
 EDGES = np.array([d for d, _ in DEPTH_SCALE[:-1]], np.float32)
-FILL = re.compile(r"(\d*\.?\d+) (\d*\.?\d+) (\d*\.?\d+) rg (\d*\.?\d+) (\d*\.?\d+) (\d*\.?\d+) RG")
+N = r"(\d*\.?\d+)"
+FILL = re.compile(rf"{N} {N} {N} (rg|scn)\s+{N} {N} {N} (RG|SCN)")    # Füll- = Strichfarbe (rg oder ICC-scn)
 
 
 def legend_colors(page):
@@ -319,14 +322,14 @@ def depth_variant(pdf, pno, base, rgb, out):
     p = d[0]
     xrefs = p.get_contents()
     s = p.read_contents().decode("latin1")
-    memo, repl = {}, "{0} {1} {2} rg {0} {1} {2} RG".format(*rgb)
+    memo, c = {}, "{} {} {}".format(*rgb)
     def sub(m):
         a = m.groups()
-        if a[:3] != a[3:]:
+        if a[:3] != a[4:7]:
             return m.group(0)
         if a[:3] not in memo:
             memo[a[:3]] = is_depth([float(x) * 255 for x in a[:3]], base)
-        return repl if memo[a[:3]] else m.group(0)
+        return f"{c} {a[3]} {c} {a[7]}" if memo[a[:3]] else m.group(0)
     s = FILL.sub(sub, s)
     d.update_stream(xrefs[0], s.encode("latin1"))
     for x in xrefs[1:]:
@@ -378,7 +381,7 @@ def recolor(pdf, pno, frame, k, s, td):
     slope, aspect = np.arctan(np.hypot(dx, dy)), np.arctan2(dy, -dx)
     alt, az = math.radians(45), math.radians(315)
     hs = math.sin(alt) * np.cos(slope) + math.cos(alt) * np.sin(slope) * np.cos(az - aspect)
-    shade = np.clip(hs - math.sin(alt), -0.15, 0.35).astype(np.float32)
+    shade = np.clip(hs - math.sin(alt), -0.12, 0.15).astype(np.float32)
     up = lambda a: np.asarray(Image.fromarray(a).resize((gx.shape[1] * f, gx.shape[0] * f), Image.BILINEAR))[:H, :W]
     dep, shade = up(dep), up(shade)
     out = np.array(ppm(f"{td}/w.pdf", 1, frame, k, f"{td}/w"))             # Linien auf Weiß
@@ -398,6 +401,7 @@ def render(pdf, pno, frame, dpi, s):
     with tempfile.TemporaryDirectory() as td:
         im = recolor(pdf, pno, frame, k, s, td)
         if im is None:
+            print(f"{Path(pdf).name} S. {pno}: Originalfarben (keine Vektor-Legende/Koten)", file=sys.stderr)
             im = ppm(pdf, pno, frame, k, f"{td}/p")
     return im, (int(frame[0] * k) / k, int(frame[1] * k) / k), k
 

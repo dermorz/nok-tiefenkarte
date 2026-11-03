@@ -1,7 +1,7 @@
 """Uferlinien + Kilometrierung aus den Vektor-PDFs und Einfärbung nach rules.yaml.
 
     python ufer.py extract [--only X]   # out/ufer/<blatt>.json: Uferlinien, km-Punkte, Achse (lon/lat)
-    python ufer.py osm                  # data/osm/nok.json: Fähren, Brücken, Freileitungen (Overpass, ODbL)
+    python ufer.py osm                  # data/osm/nok.json: Fähren, Brücken, Freileitungen, Anleger, Häfen (Overpass, ODbL)
     python ufer.py build [--only X]     # site/ufer.geojson + site/rules.json
 
 PDF-Ebenen (geprüft an NOK-74-76, Borgstedter See): Uferlinie = hellblau (0.286, 0.608, 0.996) 0,85 pt
@@ -105,7 +105,10 @@ def cmd_osm(_):
      node["amenity"="ferry_terminal"](53.85,9.10,54.40,10.20);
      way["bridge"]["highway"](53.85,9.10,54.40,10.20);
      way["bridge"]["railway"](53.85,9.10,54.40,10.20);
-     way["power"="line"](54.25,9.55,54.40,9.85););
+     way["power"="line"](54.25,9.55,54.40,9.85);
+     way["man_made"="pier"](53.85,9.10,54.40,10.20);
+     way["landuse"="harbour"](53.85,9.10,54.40,10.20);
+     way["landuse"="industrial"]["industrial"~"^(port|shipyard)$"](53.85,9.10,54.40,10.20););
     out geom tags;"""
     for url in ("https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"):
         r = requests.post(url, data={"data": q}, headers={"User-Agent": "nok-tiefenkarte/1.0"}, timeout=180)
@@ -215,10 +218,45 @@ def seg_intersections(P, Q):
 
 
 def osm_ways(osm, tags):
+    """Ways, deren Tags passen (Wert oder Liste möglicher Werte), mit Geometrie in UTM."""
     for el in osm["elements"]:
         t = el.get("tags", {})
-        if el["type"] == "way" and all(t.get(k) == v for k, v in tags.items()):
+        if el["type"] == "way" and all(t.get(k) in (v if isinstance(v, list) else [v]) for k, v in tags.items()):
             yield el, utm([(g["lon"], g["lat"]) for g in el["geometry"]])
+
+
+def inside(poly, P, res=2.0):
+    """Punkte P in geschlossener Polylinie poly (UTM, Raster 2 m)."""
+    from PIL import Image, ImageDraw
+    lo = poly.min(0)
+    W, H = (np.ceil((poly.max(0) - lo) / res) + 2).astype(int)
+    im = Image.new("1", (int(W), int(H)))
+    ImageDraw.Draw(im).polygon([tuple(v) for v in (poly - lo) / res], fill=1)
+    a, ij = np.asarray(im), ((P - lo) / res).astype(int)
+    ok = (ij[:, 0] >= 0) & (ij[:, 0] < W) & (ij[:, 1] >= 0) & (ij[:, 1] < H)
+    r = np.zeros(len(P), bool)
+    r[ok] = a[ij[ok, 1], ij[ok, 0]]
+    return r
+
+
+def near_objects(spec, osm, shore, tree):
+    """Uferpunkte (Indizes) an OSM-Objekten: Enden (Fähren), Stützpunkte im Abstand, Flächen innen."""
+    P = shore[0]
+    for el, W in osm_ways(osm, spec["osm"]):
+        if spec.get("enden"):
+            pts = [W[0], W[-1]]
+        else:                                                   # Kanten auf ≤ 5 m verdichten
+            pts = [W[0]] + [a + (b - a) * t for a, b in zip(W[:-1], W[1:])
+                            for t in np.linspace(0, 1, max(2, int(np.hypot(*(b - a)) / 5) + 1))[1:]]
+        idx = set()
+        for p in pts:
+            idx.update(tree.query_ball_point(p, spec.get("abstand_m", 30)))
+        if not spec.get("enden") and len(W) > 3 and np.allclose(W[0], W[-1]):
+            lo, hi = W.min(0), W.max(0)
+            cand = np.where(((P >= lo) & (P <= hi)).all(1))[0]
+            idx.update(cand[inside(W, P[cand])])
+        if idx:
+            yield el, sorted(idx)
 
 
 # --------------------------------------------------------------------------- Regeln
@@ -226,6 +264,31 @@ def resolve(rules, sheets, osm):
     """Regeln -> Intervalle (rule_id, gruppe, seiten, km_lo, km_hi) + Protokoll."""
     iv, log, open_ = [], [], []
     shore_cache = {s.id: list(s.shores()) for s in sheets}
+    # alle gültigen Uferpunkte flach (für Objektregeln): Punkt, Gewässer, Seite, km
+    flat = [(Q[keep], [s.group] * int(keep.sum()), sd[keep], km[keep])
+            for s in sheets for Q, km, sd, keep in shore_cache[s.id]]
+    shore = (np.vstack([f[0] for f in flat]), np.array([g for f in flat for g in f[1]]),
+             np.concatenate([f[2] for f in flat]), np.concatenate([f[3] for f in flat]))
+    from scipy.spatial import cKDTree
+    tree = cKDTree(shore[0])
+    def objects(r, g):
+        """Regel aus OSM-Objekten: je Objekt die berührten Uferstücke (Lücke > 30 m trennt) ± Puffer."""
+        n = 0
+        for spec in g["objekte"]:
+            dk = spec.get("puffer_m", 0) / 1000
+            for el, idx in near_objects(spec, osm, shore, tree):
+                for grp, sd in {(shore[1][i], shore[2][i]) for i in idx}:
+                    ks = np.sort([shore[3][i] for i in idx if shore[1][i] == grp and shore[2][i] == sd])
+                    lim = spec.get("km")
+                    if lim and not (grp == "NOK" and lim[0] <= ks.mean() <= lim[1]):   # km gilt nur für den Kanal
+                        continue
+                    for run in np.split(ks, np.where(np.diff(ks) > 0.03)[0] + 1):
+                        iv.append((r["id"], grp, [sd], run[0] - dk, run[-1] + dk))
+                        n += 1
+                        name = el["tags"].get("name") or "/".join(f"{k}={v}" for k, v in spec["osm"].items() if not isinstance(v, list)) or "OSM"
+                        log.append(f"{r['id']}: {name} (way/{el['id']}) -> {grp} {sd} km {run[0] - dk:.3f}–{run[-1] + dk:.3f}")
+        if not n:
+            log.append(f"{r['id']}: keine OSM-Objekte am Ufer")
     def bound(spec, group, side, other_km=None):
         if "km" in spec:
             return spec["km"], f"km {spec['km']}"
@@ -264,26 +327,8 @@ def resolve(rules, sheets, osm):
                         lo, hi = (-np.inf, hi) if bis_k <= von_k else (lo, np.inf)
                     iv.append((r["id"], g["gewaesser"], sides, lo, hi))
                     log.append(f"{r['id']}: {g['gewaesser']} {side} von {von_t} bis {bis_t}{' (offen)' if g['bis'].get('offen') else ''}")
-                elif r["typ"] == "kategorie" and "osm" in g:
-                    n = 0
-                    for el, W in osm_ways(osm, g["osm"]):
-                        for end in (W[0], W[-1]):
-                            best = None
-                            for s in sheets:
-                                for Q, km, sd, keep in shore_cache[s.id]:
-                                    d = np.hypot(*(Q - end).T)
-                                    i = int(d.argmin())
-                                    if keep[i] and d[i] < 60 and (best is None or d[i] < best[0]):
-                                        best = (d[i], s.group, sd[i], float(km[i]))
-                            if best:
-                                d, grp, sd, k = best
-                                dk = g["puffer_m"] / 1000
-                                iv.append((r["id"], grp, [sd], k - dk, k + dk))
-                                n += 1
-                                log.append(f"{r['id']}: {el['tags'].get('name', 'way/' + str(el['id']))} -> {grp} {sd} km {k:.3f} "
-                                           f"(Anleger {d:.0f} m vom Ufer) ± {g['puffer_m']} m")
-                    if not n:
-                        log.append(f"{r['id']}: keine Anleger im Ausschnitt")
+                elif "objekte" in g:
+                    objects(r, g)
                 elif r["typ"] != "nicht_kartierbar":
                     open_.append(r["id"])
             except ValueError as ex:
