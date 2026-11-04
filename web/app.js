@@ -338,7 +338,7 @@ async function cleanupCaches() {   // Caches nicht mehr existierender Abschnitte
 async function main() {
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
   try {
-    app.index = await (await fetch("index.json")).json();
+    app.index = await (await fetch("index.json", { cache: "no-cache" })).json();   // sonst ggf. alter Stand aus dem HTTP-Cache
   } catch {
     $("#where").textContent = "Keine Daten – bitte einmal online öffnen.";
     return;
