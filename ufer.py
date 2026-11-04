@@ -214,7 +214,8 @@ def utm(lonlat):
 NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer (Kanalblatt zählt)
 # Ufer fremder Gewässer, die ein Band mitzeichnet (eigener Erlaubnisschein): Gewässer, km von–bis (Median
 # der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
-FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118)]            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
+FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
+               ("NOK", 44.0, 47.7, "Süd", 120)]             # Nebengewässer km 44,8 und 46,55 (Kanalufer ≤ 97 m, dort ≥ 146 m)
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
 FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120)]     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
