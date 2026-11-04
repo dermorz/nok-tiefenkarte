@@ -216,6 +216,7 @@ NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer
 # der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
 FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
                ("NOK", 44.0, 47.7, "Süd", 120),
+               ("NOK", 53.0, 53.8, "Süd", 120),             # Nebengewässer km 53,1 und 53,7 (Kanalufer ≤ 111 m, dort ≥ 150 m)
                ("Werft-Saatsee", -1e9, 1e9, "Nord", -1)]             # Nebengewässer km 44,8 und 46,55 (Kanalufer ≤ 97 m, dort ≥ 146 m)
                                                             # Werft-Saatsee: einzige Linie ist die Slipanlage im Becken
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
