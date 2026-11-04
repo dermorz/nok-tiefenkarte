@@ -54,6 +54,7 @@ ausgenommen:
         - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}
         # Dalben (Liegestellen in den Weichen) stehen im Wasser, das Ufer dahinter bleibt frei
       abschnitte:                   # von Hand, ohne passendes OSM-Objekt (Abgleich hejfish/vor Ort)
+        - {km: [3.38, 3.43], ufer: Süd, grund: Anleger/Slip Brunsbüttel Süd (wie hejfish, nicht in OSM)}
         - {km: [61.53, 61.70], ufer: Süd, grund: befestigter Umschlagplatz Rendsburg/Osterrönfeld}
         - {km: [95.36, 96.51], ufer: Süd, grund: Umschlag-/Industrieufer Kiel-Wik bis vor die Olympiabrücke (wie hejfish)}
         # Zufahrt Obereider: Südufer (Band nennt es "Nord") vom Hafen bis zur Ecke am NOK, wie hejfish
