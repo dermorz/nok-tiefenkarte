@@ -215,7 +215,9 @@ NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer
 # Ufer fremder Gewässer, die ein Band mitzeichnet (eigener Erlaubnisschein): Gewässer, km von–bis (Median
 # der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
 FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
-               ("NOK", 44.0, 47.7, "Süd", 120)]             # Nebengewässer km 44,8 und 46,55 (Kanalufer ≤ 97 m, dort ≥ 146 m)
+               ("NOK", 44.0, 47.7, "Süd", 120),
+               ("Werft-Saatsee", -1e9, 1e9, "Nord", -1)]             # Nebengewässer km 44,8 und 46,55 (Kanalufer ≤ 97 m, dort ≥ 146 m)
+                                                            # Werft-Saatsee: einzige Linie ist die Slipanlage im Becken
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
 FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120),     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
                      ("NOK", 15.25, 15.65, "Süd", 100)]   # Wilsterau (Schöpfwerk), Kanalufer dort ≤ 95 m
@@ -373,16 +375,12 @@ def resolve(rules, sheets, osm):
     tree = cKDTree(shore[0])
     def objects(r, g):
         """Regel aus OSM-Objekten: je Objekt die berührten Uferstücke (Lücke > 30 m trennt) ± Puffer."""
-        n = 0
+        n, steg = 0, []
         for spec in g["objekte"]:
             dk = spec.get("puffer_m", 0) / 1000
             for el, idx in near_objects(spec, osm, shore, tree):
                 if spec.get("bauwerk"):              # nur das Bauwerk selbst (Steg) rot, das Ufer davor bleibt frei
-                    bauten.append(dict(type="Feature", properties=dict(ufer="Steg", rules=[r["id"]], geltung=True,
-                                       gewaesser="NOK", quelle="OpenStreetMap"),
-                                       geometry=dict(type="LineString", coordinates=[[q["lon"], q["lat"]] for q in el["geometry"]])))
-                    n += 1
-                    log.append(f"{r['id']}: Steg (way/{el['id']}) als Bauwerk")
+                    steg.append((el, idx))
                     continue
                 for grp, sd in {(shore[1][i], shore[2][i]) for i in idx}:
                     ks = np.sort([shore[3][i] for i in idx if shore[1][i] == grp and shore[2][i] == sd])
@@ -397,6 +395,17 @@ def resolve(rules, sheets, osm):
                         n += 1
                         name = el["tags"].get("name") or "/".join(f"{k}={v}" for k, v in spec["osm"].items() if not isinstance(v, list)) or "OSM"
                         log.append(f"{r['id']}: {name} (way/{el['id']}) -> {grp} {sd} km {run[0] - dk:.3f}–{run[-1] + dk:.3f}")
+        def covered(i):                         # Uferpunkt liegt schon in einem Stück dieser Regel (Hafen, Werft)
+            return any(x[0] == r["id"] and x[1] == shore[1][i] and shore[2][i] in x[2] and x[3] <= shore[3][i] <= x[4]
+                       and (x[5] is None or x[5][0].query(shore[0][i])[0] <= x[5][1]) for x in iv)
+        for el, idx in steg:                    # Stege im schon roten Bereich nicht extra zeichnen
+            if all(covered(i) for i in idx):
+                continue
+            bauten.append(dict(type="Feature", properties=dict(ufer="Steg", rules=[r["id"]], geltung=True,
+                               gewaesser="NOK", quelle="OpenStreetMap"),
+                               geometry=dict(type="LineString", coordinates=[[q["lon"], q["lat"]] for q in el["geometry"]])))
+            n += 1
+            log.append(f"{r['id']}: Steg (way/{el['id']}) als Bauwerk")
         if not n:
             log.append(f"{r['id']}: keine OSM-Objekte am Ufer")
     def bound(spec, group, side, other_km=None):
@@ -437,7 +446,7 @@ def resolve(rules, sheets, osm):
                         lo, hi = (-np.inf, hi) if bis_k <= von_k else (lo, np.inf)
                     iv.append((r["id"], g["gewaesser"], sides, lo, hi, None))
                     log.append(f"{r['id']}: {g['gewaesser']} {side} von {von_t} bis {bis_t}{' (offen)' if g['bis'].get('offen') else ''}")
-                elif "objekte" in g or "abschnitte" in g:
+                if "objekte" in g or "abschnitte" in g or "frei" in g:   # auch zusätzlich zu km/von–bis
                     objects(r, g) if "objekte" in g else None
                     for st in g.get("abschnitte", []):   # von Hand: km, Seite; bei: nur Ufer ≤ 60 m an dieser Linie
                         iv.append((r["id"], st.get("gewaesser", "NOK"), [st["ufer"]], *st["km"], bei(st, 60)))
@@ -454,7 +463,7 @@ def resolve(rules, sheets, osm):
                             iv.remove(x)
                             iv += [(*x[:4], a, x[5])] * bool(x[3] < a) + [(*x[:3], b, x[4], x[5])] * bool(x[4] > b)
                         log.append(f"{r['id']}: {gw} {st['ufer']} km {a}–{b} frei (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
-                elif r["typ"] != "nicht_kartierbar":
+                elif r["typ"] != "nicht_kartierbar" and r["typ"] != "km" and "von" not in g:
                     open_.append(r["id"])
             except ValueError as ex:
                 open_.append(r["id"]); log.append(f"{r['id']}: FEHLER {ex}")
