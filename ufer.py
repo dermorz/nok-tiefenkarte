@@ -219,7 +219,8 @@ FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118)]            # Eider nördlich vo
 FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120)]     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
-UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)])]   # Rendsburg Süd, Steinpackung
+UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)]),   # Rendsburg Süd, Steinpackung
+                 ((63.54, 63.73), [(9.6960766, 54.2954272), (9.6985298, 54.2961508)])]   # Saatsee Süd, Atlas ohne Uferlinie
 
 
 class Sheet:
@@ -351,7 +352,14 @@ def near_objects(spec, osm, shore, tree):
 # --------------------------------------------------------------------------- Regeln
 def resolve(rules, sheets, osm):
     """Regeln -> Intervalle (rule_id, gruppe, seiten, km_lo, km_hi) + Protokoll."""
-    iv, log, open_ = [], [], []
+    iv, log, open_, frei = [], [], [], []
+    def bei(st, d):
+        """Linie durch st["bei"] (lat, lon), verdichtet -> (Baum, Radius m); None ohne bei."""
+        if "bei" not in st:
+            return None
+        B = utm([q[::-1] for q in st["bei"]])
+        B = np.vstack([a + (b - a) * t for a, b in zip(B[:-1], B[1:]) for t in np.linspace(0, 1, 30)])
+        return cKDTree(B), d
     shore_cache = {s.id: list(s.shores()) for s in sheets}
     # alle gültigen Uferpunkte flach (für Objektregeln): Punkt, Gewässer, Seite, km
     flat = [(Q[keep], [s.group] * int(keep.sum()), sd[keep], km[keep])
@@ -422,16 +430,15 @@ def resolve(rules, sheets, osm):
                 elif "objekte" in g or "abschnitte" in g:
                     objects(r, g) if "objekte" in g else None
                     for st in g.get("abschnitte", []):   # von Hand: km, Seite; bei: nur Ufer ≤ 60 m an dieser Linie
-                        near = None
-                        if "bei" in st:                    # Linie durch die Punkte, auf 10 m verdichtet
-                            B = utm([q[::-1] for q in st["bei"]])
-                            B = np.vstack([a + (b - a) * t for a, b in zip(B[:-1], B[1:]) for t in np.linspace(0, 1, 30)])
-                            near = (cKDTree(B), 60)
-                        iv.append((r["id"], st.get("gewaesser", "NOK"), [st["ufer"]], *st["km"], near))
+                        iv.append((r["id"], st.get("gewaesser", "NOK"), [st["ufer"]], *st["km"], bei(st, 60)))
                         log.append(f"{r['id']}: {st.get('gewaesser', 'NOK')} {st['ufer']} km {st['km'][0]}–{st['km'][1]} (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
                     for st in g.get("frei", []):         # von Hand ausgenommen: schneidet die Intervalle der Regel
                         a, b = st["km"]
                         gw = st.get("gewaesser", "NOK")
+                        if "bei" in st:                  # nur Ufer ≤ 10 m an der Linie (Mole: Becken gleiche km/Seite)
+                            frei.append((r["id"], gw, st["ufer"], a, b, bei(st, 10)))
+                            log.append(f"{r['id']}: {gw} {st['ufer']} km {a}–{b} frei an Linie (von Hand, {st.get('grund', '')})")
+                            continue
                         cut = [x for x in iv if x[0] == r["id"] and x[1] == gw and st["ufer"] in x[2] and x[3] < b and x[4] > a]
                         for x in cut:
                             iv.remove(x)
@@ -441,7 +448,7 @@ def resolve(rules, sheets, osm):
                     open_.append(r["id"])
             except ValueError as ex:
                 open_.append(r["id"]); log.append(f"{r['id']}: FEHLER {ex}")
-    return iv, log, open_
+    return iv, log, open_, frei
 
 
 def extra_lines(rules, osm):
@@ -480,7 +487,7 @@ def cmd_build(a):
         for s in sheets:
             if s.group != "NOK":
                 s.exclude = tree
-    iv, log, open_ = resolve(rules, sheets, osm)
+    iv, log, open_, frei = resolve(rules, sheets, osm)
     print("\n".join(log))
     gb = rules["geltungsbereich"]
     dest = Path("site/ufer"); dest.mkdir(parents=True, exist_ok=True)
@@ -494,7 +501,9 @@ def cmd_build(a):
                     return None
                 ids = tuple(sorted(rid for rid, g, sides, lo, hi, near in iv
                                    if g == s.group and side[i] in sides and lo <= km[i] <= hi
-                                   and (near is None or near[0].query(Q[i])[0] <= near[1])))
+                                   and (near is None or near[0].query(Q[i])[0] <= near[1])
+                                   and not any(f[0] == rid and f[1] == g and f[2] == side[i] and f[3] <= km[i] <= f[4]
+                                               and f[5][0].query(Q[i])[0] <= f[5][1] for f in frei)))
                 inside = s.group != "NOK" or gb["von_km"] <= km[i] <= gb["bis_km"] or any(r in gb.get("auch", ()) for r in ids)
                 return str(side[i]), ids, bool(inside)
             run, cur = [], None
