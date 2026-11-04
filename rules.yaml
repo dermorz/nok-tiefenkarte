@@ -26,13 +26,16 @@ ausgenommen:
       objekte:
         # Fähranlagen/Fährzufahrt: Endpunkte der Fährlinie am Ufer. Die Fährbuchten sind je Seite
         # ~100–300 m lang (Abgleich hejfish), 90 m je Richtung deckt die meisten ab. PRÜFEN
-        - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90}
+        # ausser: Rendsburg Kreishafen, Fußgänger-Ersatzfähre nur bei Bauarbeiten/Events (dort Steinpackung, frei)
+        - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90, ausser: [448796387]}
         # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren
         - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10}
         # Umschlagstellen: Hafen- und Werftflächen (Rendsburg Kreishafen, Nobiskrug, Saatsee …)
         - {osm: {landuse: harbour}, puffer_m: 10}
         - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}
         # Dalben (Liegestellen in den Weichen) stehen im Wasser, das Ufer dahinter bleibt frei
+      abschnitte:                   # von Hand, ohne passendes OSM-Objekt (Abgleich hejfish/vor Ort)
+        - {km: [61.53, 61.70], ufer: Süd, grund: befestigter Umschlagplatz Rendsburg/Osterrönfeld}
 
   - id: brunsbuettel_haefen
     text: "Betriebs- und Ölhafen Brunsbüttel"

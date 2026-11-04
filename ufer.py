@@ -140,9 +140,13 @@ def utm(lonlat):
 
 
 NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer (Kanalblatt zählt)
-# Ufer fremder Gewässer, die Kanalblätter mitzeichnen (eigener Erlaubnisschein): km von–bis, Seite,
-# Linien mit Achsabstand (Median) darüber fallen weg. Kanalufer dort ≤ 112 m, Eider ≥ 121 m.
-FREMDE_UFER = [(55.5, 60.0, "Nord", 118)]   # Eider nördlich vom Kanal (Breiholz–Schülp)
+# Ufer fremder Gewässer, die ein Band mitzeichnet (eigener Erlaubnisschein): Gewässer, km von–bis (Median
+# der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
+FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
+               ("Flemhuder-See", 0.9, 9.9, "Süd", 0)]       # Achterwehrer Schifffahrtskanal östlich vom See
+# Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
+# Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
+UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)])]   # Rendsburg Süd, Steinpackung
 
 
 class Sheet:
@@ -198,9 +202,9 @@ class Sheet:
             Q = np.array(Q)
             km, side, d = self.locate(Q)
             keep = (km >= self.lo) & (km < self.hi)
-            if self.group == "NOK" and keep.any():
+            if keep.any():
                 k, sd, dm = np.median(km[keep]), side[keep][0], np.median(d[keep])
-                if any(a <= k <= b and sd == u and dm > m for a, b, u, m in FREMDE_UFER):
+                if any(g == self.group and a <= k <= b and sd == u and dm > m for g, a, b, u, m in FREMDE_UFER):
                     keep[:] = False
             if self.exclude is not None:   # Kanalufer, die ein See-Band mitzeichnet, gehören zum NOK
                 keep &= self.exclude.query(Q)[0] > NOK_OVERLAP_M
@@ -250,6 +254,8 @@ def near_objects(spec, osm, shore, tree):
     """Uferpunkte (Indizes) an OSM-Objekten: Enden (Fähren), Stützpunkte im Abstand, Flächen innen."""
     P = shore[0]
     for el, W in osm_ways(osm, spec["osm"]):
+        if el["id"] in spec.get("ausser", ()):
+            continue
         if spec.get("enden"):
             pts = [W[0], W[-1]]
         else:                                                   # Kanten auf ≤ 5 m verdichten
@@ -334,8 +340,11 @@ def resolve(rules, sheets, osm):
                         lo, hi = (-np.inf, hi) if bis_k <= von_k else (lo, np.inf)
                     iv.append((r["id"], g["gewaesser"], sides, lo, hi))
                     log.append(f"{r['id']}: {g['gewaesser']} {side} von {von_t} bis {bis_t}{' (offen)' if g['bis'].get('offen') else ''}")
-                elif "objekte" in g:
-                    objects(r, g)
+                elif "objekte" in g or "abschnitte" in g:
+                    objects(r, g) if "objekte" in g else None
+                    for st in g.get("abschnitte", []):   # von Hand: Kanal-km, Seite
+                        iv.append((r["id"], "NOK", [st["ufer"]], *st["km"]))
+                        log.append(f"{r['id']}: NOK {st['ufer']} km {st['km'][0]}–{st['km'][1]} (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
                 elif r["typ"] != "nicht_kartierbar":
                     open_.append(r["id"])
             except ValueError as ex:
@@ -350,6 +359,10 @@ def cmd_build(a):
     groups = {}
     for e in exts:
         groups.setdefault(group_of(e), []).append(e)
+    for (k0, k1), line in UFER_ERGAENZT:
+        for e in groups["NOK"]:
+            if e["km"] and e["km"][0] < k1 and e["km"][1] > k0:
+                e["shore"].append(line)
     sheets = [Sheet(e, groups) for e in exts]
     nok = [Q for s in sheets if s.group == "NOK" for Q, *_ in s.shores()]
     if nok:
