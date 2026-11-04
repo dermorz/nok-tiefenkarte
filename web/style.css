@@ -85,7 +85,7 @@ h3.folder { margin: 18px 0 6px; font-size: 15px; text-transform: uppercase; lett
 #angel-note .g { color: #1e9e3a; font-weight: 700; } #angel-note .r { color: #d0021b; font-weight: 700; } #angel-note .o { color: #e08a00; font-weight: 700; }
 body.angel .leaflet-top.leaflet-right { top: calc(env(safe-area-inset-top) + 150px); }
 #readout .rule { margin-top: 6px; padding-left: 8px; border-left: 4px solid var(--line); }
-#readout .rule.rot { border-color: #d0021b; } #readout .rule.orange { border-color: #e08a00; } #readout .rule.gruen { border-color: #1e9e3a; }
+#readout .rule.rot { border-color: #d0021b; } #readout .rule.orange { border-color: #e08a00; } #readout .rule.gruen { border-color: #1e9e3a; } #readout .rule.gelb { border-color: #f2d500; }
 .legend { list-style: none; padding: 0; margin: 0; columns: 2; font-size: 14px; }
 .legend li { display: flex; align-items: center; gap: 8px; break-inside: avoid; }
 .legend i { width: 28px; height: 14px; border: 1px solid var(--line); }

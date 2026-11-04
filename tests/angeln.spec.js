@@ -34,6 +34,14 @@ test("Borgstedter See: Nordufer östlich A7 und Südufer östlich der westlichen
   expect(at(fs, "Süd", 1.8).st).toBe("gruen");     // westlich der Leitung (km 1,57)
 });
 
+test("Baggerloch Dückerswisch: in der Schonzeit rot, sonst gelb (wie hejfish)", async ({ page }) => {
+  let fs = await statuses(page, "2027-05-01", "20250703-NOK-20-22_p7");
+  expect(at(fs, "Nord", 20.7).st).toBe("rot");
+  fs = await statuses(page, "2027-11-01", "20250703-NOK-20-22_p7");
+  expect(at(fs, "Nord", 20.7).st).toBe("gelb");
+  expect(at(fs, "Nord", 21.5).st).toBe("gruen");
+});
+
 test("Antippen einer Uferlinie zeigt Regeltext und Stand", async ({ page }) => {
   await statuses(page, "2027-04-15", "20250703-NOK-74-76_p7");
   await page.evaluate(() => app.map.setView([54.3645, 9.8193], 18));

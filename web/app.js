@@ -90,7 +90,7 @@ function initMap() {
 }
 
 // ---------------------------------------------------------------- Angel-Layer (Uferlinien nach rules.json)
-const COLORS = { gruen: "#1e9e3a", rot: "#d0021b", orange: "#e08a00", grau: "#8a959c" };
+const COLORS = { gruen: "#1e9e3a", rot: "#d0021b", orange: "#e08a00", gelb: "#f2d500", grau: "#8a959c" };
 // Prüfdatum per ?datum=JJJJ-MM-TT (zum Kontrollieren der Schonzeiten), sonst heute
 const today = () => { const q = new URLSearchParams(location.search).get("datum"); return q ? new Date(q + "T12:00") : new Date(); };
 const mmdd = (d) => `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -100,23 +100,24 @@ function inPeriod(z, d) {
   return z.von <= z.bis ? z.von <= t && t <= z.bis : t >= z.von || t <= z.bis;   // auch über Jahreswechsel
 }
 const fmtPeriod = (z) => z ? `${z.von.slice(3)}.${z.von.slice(0, 2)}.–${z.bis.slice(3)}.${z.bis.slice(0, 2)}.` : "";
-/** Status eines Uferabschnitts am Datum d: rot = Ausnahme gilt, orange = Einschränkung gilt, sonst grün. */
+/** Status am Datum d: rot = Ausnahme gilt, orange = Einschränkung gilt, gelb = zeitweise ausgenommen (jetzt nicht), sonst grün. */
 function shoreStatus(p, d) {
   if (!p.geltung) return "grau";
   const rs = p.rules.map((id) => app.rules.rules[id]).filter(Boolean);
   if (rs.some((r) => r.art === "ausgenommen" && inPeriod(r.zeitraum, d))) return "rot";
   if (rs.some((r) => r.art === "einschraenkungen" && inPeriod(r.zeitraum, d))) return "orange";
+  if (rs.some((r) => r.art === "ausgenommen" && r.zeitraum)) return "gelb";   // wie hejfish: Schonzeit-Sperrgebiet
   return "gruen";
 }
 function shoreInfo(p) {
   const d = today(), st = shoreStatus(p, d);
   const head = { gruen: "Laut Schein nicht ausgenommen", rot: "Ausgenommen – Angeln vom Ufer nicht erlaubt",
-    orange: "Erlaubt mit Einschränkung", grau: "Außerhalb des Geltungsbereichs" }[st];
+    orange: "Erlaubt mit Einschränkung", gelb: "Zeitweise ausgenommen – derzeit erlaubt", grau: "Außerhalb des Geltungsbereichs" }[st];
   const km = `${p.gewaesser === "NOK" ? "NOK" : p.gewaesser.replace(/-/g, " ")} ${p.ufer}ufer` +
     (p.km ? ` km ${fmt(Math.min(...p.km), 2)}–${fmt(Math.max(...p.km), 2)}` : ` (Uferlinie aus ${p.quelle})`);
   const rules = p.rules.map((id) => {
     const r = app.rules.rules[id], on = inPeriod(r.zeitraum, d);
-    const cls = !on ? "gruen" : r.art === "ausgenommen" ? "rot" : "orange";
+    const cls = !on ? (r.art === "ausgenommen" ? "gelb" : "gruen") : r.art === "ausgenommen" ? "rot" : "orange";
     const per = r.zeitraum ? ` <span class="muted">(${fmtPeriod(r.zeitraum)}, ${on ? "gilt jetzt" : "gilt derzeit nicht"})</span>` : "";
     const div = document.createElement("div"); div.className = `rule ${cls}`; div.textContent = r.anzeige ? `${r.anzeige}: ${r.text}` : r.text;
     return div.outerHTML.replace("</div>", `${per}</div>`);

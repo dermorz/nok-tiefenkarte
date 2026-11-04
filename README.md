@@ -65,6 +65,6 @@ mobiler Viewport, simulierte Geolocation).
   Hand `abschnitte` (rot) und `frei`, beide optional mit `bei` (nur Ufer an einer Linie; Abgleich hejfish/vor Ort).
   Fremde Gewässer (Eider, Achterwehrer Kanal, Wilsterau u. a.) per `FREMDE_UFER*` in `ufer.py` ausgeblendet. Ufer, die der
   Atlas nicht zeichnet (Rendsburger Hafen, Schirnau), als `extra_ufer` aus dem Rand einer OSM-Wasserfläche. Farbe
-  wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen).
+  wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen); Ausnahmen mit Zeitraum außerhalb davon gelb.
 
 Offene Punkte: `plan.md`.
