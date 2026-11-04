@@ -226,6 +226,9 @@ FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120),     # Einfahrt Flemhude
                      ("NOK", 5.45, 6.00, "Süd", 100),       # Landeshafen Ostermoor: ganz aus extra_ufer (Blattgrenze quer durchs Becken)
                      ("NOK", 5.85, 5.95, "Nord", 110),     # Graben-Mündung km 5,9 (Kanalufer ≤ 96 m)
                      ("NOK", 7.70, 7.92, "Nord", 110)]     # Nebengewässer km 7,7–7,9 (dort ≥ 113 m)   # Wilsterau (Schöpfwerk), Kanalufer dort ≤ 95 m
+# Segmente, die der Atlas quer über eine Mündung zieht (kein Ufer): Mitte lon/lat; Linien werden dort getrennt
+UFER_SCHNITT = [(9.443068, 54.173678)]   # Gieselaukanal km 40,7 Nord
+
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
 UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)]),   # Rendsburg Süd, Steinpackung
@@ -499,6 +502,15 @@ def cmd_build(a):
     groups = {}
     for e in exts:
         groups.setdefault(group_of(e), []).append(e)
+    if UFER_SCHNITT:                          # Segmente quer über Mündungen raus (Linie dort teilen)
+        C = utm(UFER_SCHNITT)
+        for e in exts:
+            out = []
+            for line in e["shore"]:
+                P, cut = utm(line), [0]
+                cut += [i + 1 for i in range(len(line) - 1) if np.hypot(*(C - (P[i] + P[i + 1]) / 2).T).min() < 15]
+                out += [line[a:b] for a, b in zip(cut, cut[1:] + [len(line)]) if b - a > 1]
+            e["shore"] = out
     for (k0, k1), line in UFER_ERGAENZT:
         for e in groups["NOK"]:
             if e["km"] and e["km"][0] < k1 and e["km"][1] > k0:
