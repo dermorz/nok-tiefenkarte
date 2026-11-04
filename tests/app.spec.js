@@ -127,3 +127,16 @@ test.describe("ohne GPS", () => {
     await expect(items.last()).toHaveText("> 16 m");
   });
 });
+
+test("Darstellung Hell/Dunkel per Schalter, Angel-Hinweis überlappt die Ortsanzeige nicht", async ({ page }) => {
+  await open(page);
+  await page.tap("#btn-list");
+  await page.selectOption("#sel-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.reload(); await page.waitForFunction(() => window.app?.map);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.evaluate(() => { $("#where").innerHTML = "Außerhalb der Abdeckung<br>Nächster Abschnitt<br>…"; });
+  if (await page.locator("#btn-angel").getAttribute("aria-pressed") !== "true") await page.tap("#btn-angel");
+  const w = await page.locator("#where").boundingBox(), n = await page.locator("#angel-note").boundingBox();
+  expect(n.y).toBeGreaterThanOrEqual(w.y + w.height);
+});

@@ -42,6 +42,6 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
       Kachelebene nur mit den Zahlen (Scans: Zahlen im Bild, dort nicht ohne Weiteres)
 
 ## Zuletzt
-- [ ] Dunkelmodus überarbeiten: Karte wird derzeit invertiert (Tiefenfarben werden dunkel).
+- [ ] Dunkelmodus überarbeiten (Schalter Automatisch/Hell/Dunkel unter „Abschnitte“ ist da): Karte wird derzeit invertiert (Tiefenfarben werden dunkel).
       Alternative: Farben behalten, nur abdunkeln. Entscheidung mit Screenshots.
       Mit der einheitlichen Legende passt die invertierte Karte nicht mehr zur Legende.

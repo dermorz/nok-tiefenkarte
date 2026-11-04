@@ -378,6 +378,12 @@ async function main() {
   const chk = $("#chk-base");
   chk.checked = store.get("base", true);
   chk.onchange = () => { store.set("base", chk.checked); chk.checked ? app.base.addTo(app.map) : app.base.remove(); };
+  const th = $("#sel-theme");
+  th.value = store.get("theme", "") || "";
+  th.onchange = () => {
+    store.set("theme", th.value || null);
+    if (th.value) document.documentElement.dataset.theme = th.value; else delete document.documentElement.dataset.theme;
+  };
   if (!store.get("disclaimer", false)) { $("#dlg-first").showModal(); $("#dlg-first").onclose = () => store.set("disclaimer", true); }
 }
 main();

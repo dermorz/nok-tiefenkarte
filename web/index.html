@@ -10,18 +10,21 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="style.css">
+<script>try { const t = JSON.parse(localStorage.getItem("theme")); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
 <body>
 <div id="map" aria-label="Karte"></div>
 
+<div id="top">
 <header id="where" role="status" aria-live="polite">Lade Abschnitte …</header>
 
 <section id="readout" role="status" aria-live="polite" hidden></section>
 
 <aside id="angel-note" hidden>
-  <span class="g">■</span> nicht ausgenommen <span class="r">■</span> ausgenommen <span class="o">■</span> Einschränkung<span id="angel-date"></span><br>
+  <span class="g">■</span> nicht ausgenommen <span class="r">■</span> ausgenommen <span class="o">■</span> Einschränkung <span class="y">■</span> zeitweise ausgenommen<span id="angel-date"></span><br>
   <span class="muted">Nicht kartiert: Baustellen, Lebendverbau, Abbruchufer, Fischereianlagen, Pachtflächen. Maßgeblich ist der Erlaubnisschein, keine Gewähr.</span>
 </aside>
+</div>
 
 <nav id="bar">
   <button id="btn-follow" aria-pressed="false" title="Eigene Position folgen">
@@ -49,6 +52,8 @@
 <dialog id="dlg-list">
   <div class="dlg-head"><h2>Abschnitte</h2><button class="close" aria-label="Schließen">✕</button></div>
   <label class="row-check"><input type="checkbox" id="chk-base"> Hintergrundkarte (basemap.de, nur online)</label>
+  <label class="row-check">Darstellung
+    <select id="sel-theme"><option value="">Automatisch (System)</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
   <p id="quota" class="muted"></p>
   <div id="sections"></div>
 </dialog>
