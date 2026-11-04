@@ -245,15 +245,23 @@ function startGps() {
     }
     setFollow(false);
     show(`<span class="muted">GPS-Zugriff verweigert – in den Browser-Einstellungen erlauben.</span>`);
-    navigator.geolocation.clearWatch(watchId); watchId = null;
+    navigator.geolocation.clearWatch(watchId); watchId = null; wake(false);
   }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 30000 });
 }
 function setFollow(on) {
   app.follow = on;
   $("#btn-follow").setAttribute("aria-pressed", on);
   if (on) { startGps(); if (app.pos) app.map.setView(app.pos.latlng, Math.max(app.map.getZoom(), 16)); }
+  if (on) wake(true);   // bleibt an, auch wenn man kurz die Karte verschiebt (GPS läuft weiter)
   updateWhere();
 }
+// Display bleibt an, sobald "Folgen" einmal an war und GPS läuft (wie eine Navi-App); nach Tab-Wechsel neu anfordern
+let lock = null;
+async function wake(on) {
+  if (!on) { lock?.release(); lock = null; return; }
+  try { lock ??= await navigator.wakeLock?.request("screen"); lock?.addEventListener("release", () => { lock = null; }); } catch { /* nicht unterstützt */ }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && watchId !== null) wake(true); });
 
 // ---------------------------------------------------------------- Abschnittsliste + Offline
 const offline = () => store.get("offline", {});

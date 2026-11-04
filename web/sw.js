@@ -1,6 +1,6 @@
 /* Service Worker: App-Hülle vorab, Kacheln/Uferlinien aus den Abschnitts-Caches (sec-*), index.json network-first. */
 const SHELL = "shell-__VERSION__";
-const FILES = ["./", "index.html", "index.json", "rules.json", "app.js", "style.css", "manifest.webmanifest", "icon.svg",
+const FILES = ["./", "index.html", "index.json", "rules.json", "app.js", "style.css", "manifest.webmanifest", "icon.svg", "apple-touch-icon.png", "icon-512.png",
   "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css"];
 
 self.addEventListener("install", (e) => {
