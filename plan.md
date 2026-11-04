@@ -29,14 +29,16 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
   - bei uns rot, bei hejfish nicht: kleine Stege (~30 Stellen, je ~100 m), z. B. Borgstedter See Nord km
     2,2/2,5, Flemhuder See; Anlegebrücken sind laut Schein ausgenommen
   - Dückerswisch: hejfish km 20,55–20,91, Schein sagt 20,45–20,80 (wir folgen dem Schein)
-  - Gieselaukanal und Flemhuder See: bei hejfish orange („nur mit eigenem Erlaubnisschein“), bei uns rot
+  - Gieselaukanal: bei hejfish orange („nur mit eigenem Erlaubnisschein“), bei uns rot
   - laut hejfish-Seitentext gesperrt bis zur Instandsetzung: barrierefreie Angelplätze Weiche Kudensee und
     Oldenbüttel (Gieselau-Mündung) – fehlt in `rules.yaml`
 - [x] Rendsburg Süd wie hejfish: km 61,53–61,70 befestigter Umschlagplatz rot (`abschnitte` in `rules.yaml`),
       61,70–61,89 Steinpackung grün (Atlas ohne blaue Linie, `UFER_ERGAENZT`), Ersatzfähre
       way/448796387 (nur bei Bauarbeiten/Events) zählt nicht als Fähranlage
 - [x] Eider-Ufer nördlich vom Kanal (km 55,5–60) nicht einfärben, eigener Erlaubnisschein
-      (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); ebenso Achterwehrer Schifffahrtskanal am Flemhuder See
+      (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); Flemhuder See ganz ohne Uferfarben (`FREMDE_GEWAESSER`)
+- [x] `frei` in `rules.yaml`: von Hand freie Stücke trotz OSM-Objekt (Kreishafen Nord bis km 61,735, Saatsee-Werft
+      nur km 63,414–64,08 wie hejfish)
 - [ ] Gescannte Bände: Tiefenfarben noch in Originallegende (keine Koten im PDF)
 - [ ] Flemhuder See: Bezugshorizont PN 5,00 m statt 4,80 m wie im Kanal – Tiefen 0,2 m anders bezogen
 - [ ] Kanalfähre Brunsbüttel: Anleger landen bei km 2,02 (Nord) und 2,40 (Süd) – OSM-Linie prüfen

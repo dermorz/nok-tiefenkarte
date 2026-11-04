@@ -142,8 +142,8 @@ def utm(lonlat):
 NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer (Kanalblatt zählt)
 # Ufer fremder Gewässer, die ein Band mitzeichnet (eigener Erlaubnisschein): Gewässer, km von–bis (Median
 # der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
-FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
-               ("Flemhuder-See", 0.9, 9.9, "Süd", 0)]       # Achterwehrer Schifffahrtskanal östlich vom See
+FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118)]            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
+FREMDE_GEWAESSER = {"Flemhuder-See"}   # eigener Erlaubnisschein: Band ganz ohne Uferfarben (Kanalufer zählen zum NOK)
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
 UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)])]   # Rendsburg Süd, Steinpackung
@@ -192,7 +192,7 @@ class Sheet:
 
     def shores(self, step=2.0):
         """Uferlinien verdichtet (≤ step m), mit km/Seite, auf den eigenen km-Bereich beschnitten."""
-        for line in self.e["shore"]:
+        for line in self.e["shore"] if self.group not in FREMDE_GEWAESSER else []:
             P = utm(line)
             seg = np.hypot(*np.diff(P, axis=0).T)
             Q = [P[0]]
@@ -345,6 +345,13 @@ def resolve(rules, sheets, osm):
                     for st in g.get("abschnitte", []):   # von Hand: Kanal-km, Seite
                         iv.append((r["id"], "NOK", [st["ufer"]], *st["km"]))
                         log.append(f"{r['id']}: NOK {st['ufer']} km {st['km'][0]}–{st['km'][1]} (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
+                    for st in g.get("frei", []):         # von Hand ausgenommen: schneidet die Intervalle der Regel
+                        a, b = st["km"]
+                        cut = [x for x in iv if x[0] == r["id"] and x[1] == "NOK" and st["ufer"] in x[2] and x[3] < b and x[4] > a]
+                        for x in cut:
+                            iv.remove(x)
+                            iv += [(*x[:4], a)] * bool(x[3] < a) + [(*x[:3], b, x[4])] * bool(x[4] > b)
+                        log.append(f"{r['id']}: NOK {st['ufer']} km {a}–{b} frei (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
                 elif r["typ"] != "nicht_kartierbar":
                     open_.append(r["id"])
             except ValueError as ex:
