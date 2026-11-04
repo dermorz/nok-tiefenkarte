@@ -70,11 +70,15 @@ ausgenommen:
 
   - id: baggerloch_dueckerswisch
     text: "Baggerloch Dückerswisch, km 20,45 bis 20,80 Nord, vom 01.04. bis 15.06."
-    typ: km
+    typ: ort                        # ergänzt: ganze westliche Ausbuchtung bis km 20,98 (Abgleich vor Ort/hejfish)
     ufer: Nord
-    von_km: 20.45
-    bis_km: 20.80
     zeitraum: {von: "04-01", bis: "06-15"}   # außerhalb: grün, im Zeitraum: rot
+    geometrie:
+      abschnitte:
+        - {km: [20.45, 20.98], ufer: Nord, grund: Baggerloch Dückerswisch bis Ende der Ausbuchtung}
+      frei:                         # Kanalseite der Mole (gleiche km wie die Beckenseite)
+        - {km: [20.40, 20.56], ufer: Nord, bei_m: 8, grund: Kanalseite der Mole,
+           bei: [[54.030574, 9.29992], [54.031233, 9.300086], [54.031801, 9.300243], [54.031969, 9.300289], [54.032088, 9.300212]]}
 
   - id: gieselau_audorf_flemhude_achterwehr
     text: >-
