@@ -38,8 +38,8 @@ ausgenommen:
         # ausser: Rendsburg Kreishafen, Fußgänger-Ersatzfähre nur bei Bauarbeiten/Events (dort Steinpackung, frei)
         - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90, ausser: [448796387]}
         # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren
-        # ausser: kleine private Stege am Borgstedter See/Enge und Westufer Obereider (bei hejfish grün)
-        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10, ausser: [117930478, 117930485, 1182773764, 1556540717, 517064726, 1081162622]}
+        # ausser: Schöpfwerk Wilsterau km 15,35; kleine private Stege am Borgstedter See/Enge und Westufer Obereider (bei hejfish grün)
+        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10, ausser: [1339825524, 117930478, 117930485, 1182773764, 1556540717, 517064726, 1081162622]}
         # Umschlagstellen: Hafen- und Werftflächen (Rendsburg Kreishafen, Nobiskrug, Saatsee …)
         - {osm: {landuse: harbour}, puffer_m: 10}
         - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}

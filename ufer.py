@@ -217,7 +217,8 @@ NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer
 FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
                ("NOK", 44.0, 47.7, "Süd", 120)]             # Nebengewässer km 44,8 und 46,55 (Kanalufer ≤ 97 m, dort ≥ 146 m)
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
-FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120)]     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
+FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120),     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
+                     ("NOK", 15.25, 15.65, "Süd", 100)]   # Wilsterau (Schöpfwerk), Kanalufer dort ≤ 95 m
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
 UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)]),   # Rendsburg Süd, Steinpackung
