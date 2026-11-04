@@ -216,12 +216,15 @@ NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer
 # der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
 FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
                ("NOK", 44.0, 47.7, "Süd", 120),
-               ("NOK", 53.0, 53.8, "Süd", 120),             # Nebengewässer km 53,1 und 53,7 (Kanalufer ≤ 111 m, dort ≥ 150 m)
+               ("NOK", 53.0, 53.8, "Süd", 120),
+               ("NOK", 7.80, 7.83, "Nord", 85),              # Stummel an der Mündung km 7,81 (quer zum Kanal)             # Nebengewässer km 53,1 und 53,7 (Kanalufer ≤ 111 m, dort ≥ 150 m)
                ("Werft-Saatsee", -1e9, 1e9, "Nord", -1)]             # Nebengewässer km 44,8 und 46,55 (Kanalufer ≤ 97 m, dort ≥ 146 m)
                                                             # Werft-Saatsee: einzige Linie ist die Slipanlage im Becken
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
 FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120),     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
-                     ("NOK", 15.25, 15.65, "Süd", 100)]   # Wilsterau (Schöpfwerk), Kanalufer dort ≤ 95 m
+                     ("NOK", 15.25, 15.65, "Süd", 100),
+                     ("NOK", 5.85, 5.95, "Nord", 110),     # Graben-Mündung km 5,9 (Kanalufer ≤ 96 m)
+                     ("NOK", 7.70, 7.92, "Nord", 110)]     # Nebengewässer km 7,7–7,9 (dort ≥ 113 m)   # Wilsterau (Schöpfwerk), Kanalufer dort ≤ 95 m
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
 UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)]),   # Rendsburg Süd, Steinpackung

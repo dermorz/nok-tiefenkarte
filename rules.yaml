@@ -76,6 +76,10 @@ ausgenommen:
       objekte:
         - {osm: {landuse: [harbour, industrial]}, km: [0, 6.5], puffer_m: 20}
         - {osm: {man_made: pier}, km: [0, 6.5], abstand_m: 15, puffer_m: 20}
+      abschnitte:                   # von Hand wie hejfish: zusammenhängend statt OSM-Flickenteppich
+        - {km: [1.65, 4.30], ufer: Nord, grund: Schleuse bis Ende Ölhafen inkl. Mole}
+        - {km: [1.65, 2.44], ufer: Süd, grund: Schleuse bis Fähre Brunsbüttel}
+        - {km: [5.45, 5.95], ufer: Süd, grund: Hafenbecken Süd (Chemcoast/Elbehafen-Kanalhafen)}
 
   - id: baggerloch_dueckerswisch
     text: "Baggerloch Dückerswisch, km 20,45 bis 20,80 Nord, vom 01.04. bis 15.06."
