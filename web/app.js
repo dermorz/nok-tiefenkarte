@@ -388,6 +388,16 @@ async function main() {
   const chk = $("#chk-base");
   chk.checked = store.get("base", true);
   chk.onchange = () => { store.set("base", chk.checked); chk.checked ? app.base.addTo(app.map) : app.base.remove(); };
+  // Installieren: Android/Chromium per Browser-Dialog, iOS nur per Teilen-Menü (Anleitung), als App: ausblenden
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent));
+  let prompt = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); prompt = e; $("#install").hidden = standalone; });
+  if (ios && !standalone) $("#install").hidden = false;
+  $("#btn-install").onclick = async () => {
+    if (prompt) { prompt.prompt(); await prompt.userChoice; prompt = null; $("#install").hidden = true; }
+    else $("#install-ios").hidden = false;
+  };
   const th = $("#sel-theme");
   th.value = store.get("theme", "") || "";
   th.onchange = () => {
