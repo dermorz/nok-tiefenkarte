@@ -32,4 +32,9 @@ node_modules:
 serve:                ## lokal testen: http://localhost:8000 (localhost gilt als sicherer Kontext)
 	python3 -m http.server 8000 -d site
 
-.PHONY: all kmz ufer osm web app test serve
+deploy:               ## site/ als einzelnen Commit nach gh-pages (GitHub Pages), ohne Historie
+	touch site/.nojekyll
+	cd site && rm -rf .git && git init -q -b gh-pages && git add -A && git commit -qm "Datenstand $$(python3 -c 'import json;print(json.load(open("index.json"))["version"])')" \
+	  && git push -qf git@github.com:dermorz/nok-tiefenkarte.git gh-pages && rm -rf .git
+
+.PHONY: all kmz ufer osm web app test serve deploy
