@@ -56,7 +56,7 @@ function chartLayer(name) {
   });
   return new Layer(`tiles/${name}/{z}/{x}/{y}.webp?v=${app.index.version}`, {
     minZoom: 8, maxZoom: 21, minNativeZoom: app.index.zmin, maxNativeZoom: app.index.zmax,
-    className: "chart-tiles", attribution: 'Tiefenatlas NOK: © WSV, <a href="https://www.govdata.de/dl-de/zero-2-0">dl-de/zero-2-0</a>, aufbereitet',
+    className: "chart-tiles", attribution: '© <a href="https://www.elwis.de">WSV</a>',   // dl-de/zero: Nennung freiwillig, Details im Info-Dialog
     errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==",
   });
 }
@@ -64,12 +64,12 @@ function chartLayer(name) {
 function initMap() {
   const map = app.map = L.map("map", { zoomControl: false, minZoom: 8, maxZoom: 21, zoomSnap: 0.5, tap: false });
   L.control.zoom({ position: "topright" }).addTo(map);
-  map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+  map.attributionControl.setPrefix(false);   // Leaflet (BSD) steht im Info-Dialog; mobil sonst mehrzeilig
   const year = new Date().getFullYear();
   $("#bkg-year").textContent = year;
   app.base = L.tileLayer("https://sgx.geodatenzentrum.de/wmts_basemapde/tile/1.0.0/de_basemapde_web_raster_grau/default/GLOBAL_WEBMERCATOR/{z}/{y}/{x}.png", {
     maxNativeZoom: 18, maxZoom: 21, className: "base-tiles", opacity: 0.6,
-    attribution: `Hintergrund: © GeoBasis-DE / BKG (${year}) <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>`,
+    attribution: `© GeoBasis-DE / BKG (${year}) <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>`,
   });
   if (store.get("base", true)) app.base.addTo(map);
   chartLayer("plan").addTo(map);
