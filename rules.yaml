@@ -25,6 +25,12 @@ extra_ufer:
   - {osm: 76192053, von: [54.31462, 9.70484], ueber: [54.31722, 9.70695], bis: [54.32597, 9.71351],
      gewaesser: Obereider, ufer: West, regeln: []}                           # Hafenecke bis Borgstedter Brücke
 
+  # Schirnau Nordufer km 70,18–70,74: Atlas ohne Uferlinie; OSM nennt den Kanal dort "Schirnauer See"
+  - {osm: 260501505, von: [54.344179, 9.74962], ueber: [54.345077, 9.749531], bis: [54.345129, 9.749881],
+     gewaesser: NOK, ufer: Nord, regeln: [anleger_faehren]}                  # Einbuchtung Schirnau (wie hejfish rot)
+  - {osm: 260501505, von: [54.345129, 9.749881], ueber: [54.345367, 9.750986], bis: [54.347579, 9.75616],
+     gewaesser: NOK, ufer: Nord, regeln: []}                                 # bis km 70,74
+
 # Uferbereiche, von denen aus der Fischfang NICHT erlaubt ist -> rot
 ausgenommen:
   - id: anleger_faehren

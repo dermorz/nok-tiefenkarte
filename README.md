@@ -60,10 +60,11 @@ mobiler Viewport, simulierte Geolocation).
 
 - **Angeln**: Uferlinien (hellblau, 0,85 pt) und km-Labels aus dem PDF; km und Ufer (Nord/Süd) über die
   Achse aus den Label-Paaren. Regeln in `rules.yaml`, Grenzobjekte aus OSM (`make osm`, ODbL): Brücken/Leitungen als Grenzpunkte,
-  Fähren (Endpunkte), Stege, Hafen- und Werftflächen als `objekte` (berührte Uferstücke ± Puffer, nur nahe am
-  Objekt; `ausser` für einzelne OSM-IDs), dazu von Hand `abschnitte` (rot) und `frei` (Abgleich hejfish/vor Ort).
-  Fremde Gewässer (Eider, Achterwehrer Kanal) per `FREMDE_UFER*` in `ufer.py` ausgeblendet. Ufer, die der
-  Atlas nicht zeichnet (Rendsburger Hafen), als `extra_ufer` aus dem Rand einer OSM-Wasserfläche. Farbe
+  Fähren (Endpunkte), Hafen- und Werftflächen als `objekte` (berührte Uferstücke ± Puffer, nur nahe am
+  Objekt; `ausser` für einzelne OSM-IDs), Stege mit `bauwerk: true` nur selbst rot (Ufer davor frei), dazu von
+  Hand `abschnitte` (rot) und `frei`, beide optional mit `bei` (nur Ufer an einer Linie; Abgleich hejfish/vor Ort).
+  Fremde Gewässer (Eider, Achterwehrer Kanal, Wilsterau u. a.) per `FREMDE_UFER*` in `ufer.py` ausgeblendet. Ufer, die der
+  Atlas nicht zeichnet (Rendsburger Hafen, Schirnau), als `extra_ufer` aus dem Rand einer OSM-Wasserfläche. Farbe
   wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen).
 
 Offene Punkte: `plan.md`.
