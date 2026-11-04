@@ -354,7 +354,7 @@ def near_objects(spec, osm, shore, tree):
 # --------------------------------------------------------------------------- Regeln
 def resolve(rules, sheets, osm):
     """Regeln -> Intervalle (rule_id, gruppe, seiten, km_lo, km_hi) + Protokoll."""
-    iv, log, open_, frei = [], [], [], []
+    iv, log, open_, frei, bauten = [], [], [], [], []
     def bei(st, d):
         """Linie(n) durch st["bei"] (lat, lon), verdichtet -> (Baum, Radius m, bei_m überschreibt); None ohne bei."""
         if "bei" not in st:
@@ -377,6 +377,13 @@ def resolve(rules, sheets, osm):
         for spec in g["objekte"]:
             dk = spec.get("puffer_m", 0) / 1000
             for el, idx in near_objects(spec, osm, shore, tree):
+                if spec.get("bauwerk"):              # nur das Bauwerk selbst (Steg) rot, das Ufer davor bleibt frei
+                    bauten.append(dict(type="Feature", properties=dict(ufer="Steg", rules=[r["id"]], geltung=True,
+                                       gewaesser="NOK", quelle="OpenStreetMap"),
+                                       geometry=dict(type="LineString", coordinates=[[q["lon"], q["lat"]] for q in el["geometry"]])))
+                    n += 1
+                    log.append(f"{r['id']}: Steg (way/{el['id']}) als Bauwerk")
+                    continue
                 for grp, sd in {(shore[1][i], shore[2][i]) for i in idx}:
                     ks = np.sort([shore[3][i] for i in idx if shore[1][i] == grp and shore[2][i] == sd])
                     lim = spec.get("km")
@@ -451,7 +458,7 @@ def resolve(rules, sheets, osm):
                     open_.append(r["id"])
             except ValueError as ex:
                 open_.append(r["id"]); log.append(f"{r['id']}: FEHLER {ex}")
-    return iv, log, open_, frei
+    return iv, log, open_, frei, bauten
 
 
 def extra_lines(rules, osm):
@@ -490,7 +497,7 @@ def cmd_build(a):
         for s in sheets:
             if s.group != "NOK":
                 s.exclude = tree
-    iv, log, open_, frei = resolve(rules, sheets, osm)
+    iv, log, open_, frei, bauten = resolve(rules, sheets, osm)
     print("\n".join(log))
     gb = rules["geltungsbereich"]
     dest = Path("site/ufer"); dest.mkdir(parents=True, exist_ok=True)
@@ -535,7 +542,7 @@ def cmd_build(a):
         nicht_kartierbar=[flat[k]["text"] for k in flat if flat[k]["typ"] == "nicht_kartierbar"],
         allgemein=rules.get("allgemein", []), offen=open_, osm_abgerufen=osm.get("_abgerufen")),
         ensure_ascii=False, indent=1))
-    (dest / "extra.geojson").write_text(json.dumps(dict(type="FeatureCollection", features=extra_lines(rules, osm)),
+    (dest / "extra.geojson").write_text(json.dumps(dict(type="FeatureCollection", features=extra_lines(rules, osm) + bauten),
                                                    separators=(",", ":")))
     idx = Path("site/index.json")   # neuer Datenstand, sonst liefert der Service Worker alte Uferlinien (?v=)
     if idx.exists():

@@ -37,9 +37,9 @@ ausgenommen:
         # ~100–300 m lang (Abgleich hejfish), 90 m je Richtung deckt die meisten ab. PRÜFEN
         # ausser: Rendsburg Kreishafen, Fußgänger-Ersatzfähre nur bei Bauarbeiten/Events (dort Steinpackung, frei)
         - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90, ausser: [448796387]}
-        # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren
+        # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren; bauwerk: nur der Steg rot, Ufer davor grün
         # ausser: Schöpfwerk Wilsterau km 15,35; kleine private Stege am Borgstedter See/Enge und Westufer Obereider (bei hejfish grün)
-        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10, ausser: [1339825524, 117930478, 117930485, 1182773764, 1556540717, 517064726, 1081162622]}
+        - {osm: {man_made: pier}, abstand_m: 15, bauwerk: true, ausser: [1339825524, 117930478, 117930485, 1182773764, 1556540717, 517064726, 1081162622]}
         # Umschlagstellen: Hafen- und Werftflächen (Rendsburg Kreishafen, Nobiskrug, Saatsee …)
         - {osm: {landuse: harbour}, puffer_m: 10}
         - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}
@@ -50,6 +50,8 @@ ausgenommen:
         # Zufahrt Obereider: Südufer (Band nennt es "Nord") vom Hafen bis zur Ecke am NOK, wie hejfish
         - {gewaesser: Zufahrt-Obereider, km: [65.40, 65.75], ufer: Nord, bei: [[54.31193, 9.7030], [54.3120, 9.7062], [54.3121, 9.7094]],
            grund: Rendsburger Hafen Südufer}
+        - {km: [65.72, 65.88], ufer: Nord, bei_m: 8, grund: Westseite der Hakenspitze an der Zufahrt Obereider (wie hejfish),
+           bei: [[54.31211, 9.70962], [54.31235, 9.71037], [54.31264, 9.71086], [54.31287, 9.71103], [54.31322, 9.71108]]}
       frei:                         # von Hand frei, obwohl ein OSM-Objekt das Ufer berührt
         - {km: [61.70, 61.735], ufer: Nord, grund: Kreishafen Rendsburg, Wechsel der Uferbefestigung erst bei km 61,735}
         - {km: [63.00, 63.17], ufer: Nord, grund: Saatsee-Werft, Kanalufer bis zur Molenwurzel (wie hejfish)}
