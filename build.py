@@ -352,12 +352,23 @@ def ppm(pdf, pno, frame, k, out):
     return im
 
 
+def drop_cut(kot, frame, e=10, dz=3):
+    """Am Rahmen abgeschnittene Koten ("11,1" -> "1,1") weg: ≤ e pt vom Rand und > dz m flacher als die Nachbarn."""
+    from scipy.spatial import cKDTree
+    x0, y0, x1, y1 = frame
+    near = np.minimum.reduce([kot[:, 0] - x0, x1 - kot[:, 0], kot[:, 1] - y0, y1 - kot[:, 1]]) <= e
+    _, j = cKDTree(kot[:, :2]).query(kot[:, :2], k=min(9, len(kot)))
+    med = np.median(kot[j[:, 1:], 2], axis=1)
+    return kot[~(near & (kot[:, 2] < med - dz))]
+
+
 def recolor(pdf, pno, frame, k, s, td):
     """Rahmen mit einheitlichen Tiefenfarben; None, wenn das Blatt keine Vektor-Legende/Koten hat."""
     page = pymupdf.open(pdf)[pno - 1]
     base, kot = legend_colors(page), soundings(page)
     if base is None or len(kot) < 10:
         return None
+    kot = drop_cut(kot, frame)
     if not depth_variant(pdf, pno, base, (1, 1, 1), f"{td}/w.pdf"):
         return None
     depth_variant(pdf, pno, base, (1, 0, 1), f"{td}/m.pdf")
