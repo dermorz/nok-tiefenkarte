@@ -69,4 +69,4 @@ mobiler Viewport, simulierte Geolocation).
 
 Veröffentlichen: `make deploy` (GitHub Pages, Branch `gh-pages` wird jedes Mal ersetzt).
 
-Offene Punkte: `plan.md`.
+Offene Punkte: [Issues](https://github.com/dermorz/nok-tiefenkarte/issues).

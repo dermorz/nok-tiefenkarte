@@ -6,3 +6,4 @@ node_modules/
 site/
 test-results/
 playwright-report/
+plan.md
