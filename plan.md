@@ -26,7 +26,7 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
       Brunsbüttel aus OSM. Rote hejfish-Strecken im Geltungsbereich zu 74 % abgedeckt.
 - [ ] Angeln, Rest-Abweichungen zu hejfish (prüfen, ob der Schein das hergibt):
   - bei hejfish rot, bei uns nicht: Brunsbüttel Süd km 1,7–2,4 (Schleuse/Fähre); km 61,5–61,7 Süd und
-    70,17 Nord (kurz); km 85,55–85,68 Süd; km 95,4–96,5 Süd (vor der Olympiabrücke)
+    70,17 Nord (kurz); km 85,55–85,68 Süd
   - bei uns rot, bei hejfish nicht: kleine Stege (~30 Stellen, je ~100 m), z. B. Borgstedter See Nord km
     2,2/2,5, Flemhuder See; Anlegebrücken sind laut Schein ausgenommen
   - Dückerswisch: hejfish km 20,55–20,91, Schein sagt 20,45–20,80 (wir folgen dem Schein)
@@ -41,8 +41,8 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
 - [x] Objektregeln färben nur Ufer nahe am Objekt (vorher: jedes Ufer mit gleichem km und gleicher Seite, z. B.
       Südspitze Rader Insel)
 - [x] Flemhuder See ganz aus der Karte (`AUSGELASSEN` in `build.py`)
-- [ ] Ost-Ende Kiel-Holtenau mit hejfish abgleichen (Südufer ab Industrie bis Hochbrücke rot, Nordufer östlich der
-      Hochbrücke rot); Geltungsbereich endet bei km 96,63
+- [x] Ost-Ende Kiel-Holtenau wie hejfish: Süd km 95,36–96,51 rot (von Hand), Olympiabrücke–Schleuse
+      (km 96,63–97,95) beide Ufer rot (`kiel_holtenau`, `geltungsbereich.auch` statt grau)
 - [x] Eider-Ufer nördlich vom Kanal (km 55,5–60) nicht einfärben, eigener Erlaubnisschein
       (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); Flemhuder See ganz ohne Uferfarben (`FREMDE_GEWAESSER`, im Kanalblatt 83-86 `FREMDE_UFERPUNKTE`)
 - [x] `frei` in `rules.yaml`: von Hand freie Stücke trotz OSM-Objekt (Kreishafen Nord bis km 61,735, Saatsee-Werft

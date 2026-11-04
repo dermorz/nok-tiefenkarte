@@ -470,7 +470,7 @@ def cmd_build(a):
                 ids = tuple(sorted(rid for rid, g, sides, lo, hi, near in iv
                                    if g == s.group and side[i] in sides and lo <= km[i] <= hi
                                    and (near is None or near[0].query(Q[i])[0] <= near[1])))
-                inside = s.group != "NOK" or gb["von_km"] <= km[i] <= gb["bis_km"]
+                inside = s.group != "NOK" or gb["von_km"] <= km[i] <= gb["bis_km"] or any(r in gb.get("auch", ()) for r in ids)
                 return str(side[i]), ids, bool(inside)
             run, cur = [], None
             for i in range(len(Q) + 1):

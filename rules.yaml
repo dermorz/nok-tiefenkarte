@@ -15,6 +15,7 @@ quelle:
 geltungsbereich:
   von_km: 1.65   # Binnenhafen Brunsbüttel
   bis_km: 96.63  # Hochbrücke Kiel-Holtenau/Olympiabrücke, senkrechtes Lot der östlichen Außenseite
+  auch: [kiel_holtenau]   # außerhalb, aber als Verbot gezeichnet (statt grau)
 
 # Uferbereiche, von denen aus der Fischfang NICHT erlaubt ist -> rot
 ausgenommen:
@@ -37,6 +38,7 @@ ausgenommen:
         # Dalben (Liegestellen in den Weichen) stehen im Wasser, das Ufer dahinter bleibt frei
       abschnitte:                   # von Hand, ohne passendes OSM-Objekt (Abgleich hejfish/vor Ort)
         - {km: [61.53, 61.70], ufer: Süd, grund: befestigter Umschlagplatz Rendsburg/Osterrönfeld}
+        - {km: [95.36, 96.51], ufer: Süd, grund: Umschlag-/Industrieufer Kiel-Wik bis vor die Olympiabrücke (wie hejfish)}
       frei:                         # von Hand frei, obwohl ein OSM-Objekt das Ufer berührt
         - {km: [61.70, 61.735], ufer: Nord, grund: Kreishafen Rendsburg, Wechsel der Uferbefestigung erst bei km 61,735}
         - {km: [63.10, 63.414], ufer: Nord, grund: Saatsee-Werft, Kanalufer westlich der Hafeneinfahrt (wie hejfish)}
@@ -98,8 +100,10 @@ ausgenommen:
 
   - id: kiel_holtenau
     text: "zwischen Hochbrücke Kiel-Holtenau (Olympiabrücke) und Schleuse Kiel-Holtenau (Nord- und Südufer)"
-    typ: ort
+    typ: km                         # ergänzt: Olympiabrücke km 96,63 bis Schleuse (Abgleich hejfish)
     ufer: beide
+    von_km: 96.63
+    bis_km: 97.95
 
   - id: fischereianlagen
     text: "Im unmittelbaren Anlagenbereich (Fischereianlagen der Erwerbsfischer) ist eine Fischereiausübung untersagt."
