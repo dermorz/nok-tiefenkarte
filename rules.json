@@ -1,0 +1,126 @@
+{
+ "quelle": {
+  "ausgeber": "Landesangelverband Schleswig-Holstein e. V. (LAV-SH)",
+  "schein": "Jahresschein Mitglieder LAV-SH",
+  "abgerufen": "2026-11"
+ },
+ "geltungsbereich": {
+  "von_km": 1.65,
+  "bis_km": 96.63,
+  "auch": [
+   "kiel_holtenau"
+  ]
+ },
+ "rules": {
+  "anleger_faehren": {
+   "art": "ausgenommen",
+   "text": "Anlegebrücken und Umschlagstellen, Fähranlagen und Fährzufahrten",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "kategorie"
+  },
+  "brunsbuettel_haefen": {
+   "art": "ausgenommen",
+   "text": "Betriebs- und Ölhafen Brunsbüttel",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "ort"
+  },
+  "baggerloch_dueckerswisch": {
+   "art": "ausgenommen",
+   "text": "Baggerloch Dückerswisch, km 20,45 bis 20,80 Nord, vom 01.04. bis 15.06.",
+   "zeitraum": {
+    "von": "04-01",
+    "bis": "06-15"
+   },
+   "anzeige": null,
+   "typ": "ort"
+  },
+  "gieselau_audorf_flemhude_achterwehr": {
+   "art": "ausgenommen",
+   "text": "Gieselaukanal, Audorfer See beginnend an den Spitzen des Leitdammes, endend an der Uferecke im Bereich des Überganges des Obereidersees mit Enge zum Südufer des Audorfer Sees, Flemhuder See, Stichkanal Achterwehrer Schifffahrtskanal",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "ort"
+  },
+  "ruesterbergen": {
+   "art": "ausgenommen",
+   "text": "von km 54,8 bis 55,2 Süd (Lotsenstation Rüsterbergen)",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "km"
+  },
+  "borgstedter_see_nord": {
+   "art": "ausgenommen",
+   "text": "Nordufer des Borgstedter Sees mit Enge zwischen der Autobahnbrücke Rade und dem NOK/Schirnauer See",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "ort"
+  },
+  "borgstedter_see_sued": {
+   "art": "ausgenommen",
+   "text": "Südufer des Borgstedter Sees mit Enge von der westlichen Starkstromleitung über den Borgstedter See bis zum NOK/Schirnauer See",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "ort"
+  },
+  "kiel_holtenau": {
+   "art": "ausgenommen",
+   "text": "zwischen Hochbrücke Kiel-Holtenau (Olympiabrücke) und Schleuse Kiel-Holtenau (Nord- und Südufer)",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "km"
+  },
+  "fischereianlagen": {
+   "art": "ausgenommen",
+   "text": "Im unmittelbaren Anlagenbereich (Fischereianlagen der Erwerbsfischer) ist eine Fischereiausübung untersagt.",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "nicht_kartierbar"
+  },
+  "baustellen_lebendverbau_abbruch": {
+   "art": "ausgenommen",
+   "text": "Ufer mit Baustellen oder mit Lebendverbau sowie abbruchgefährdete Ufer",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "nicht_kartierbar"
+  },
+  "kunstkoeder_zanderschonzeit_west": {
+   "art": "einschraenkungen",
+   "text": "Im gesamten Gewässer westlich der Fähre Sehestedt (km 1,65 bis 75,3) ist das Angeln mit Kunstködern während der Zanderschonzeit verboten. Ausgenommen davon sind Heringspaternoster.",
+   "zeitraum": {
+    "von": "03-01",
+    "bis": "05-31"
+   },
+   "anzeige": "Kunstköderverbot (außer Heringspaternoster)",
+   "typ": "km"
+  },
+  "gieselaukanal": {
+   "art": "einschraenkungen",
+   "text": "Gieselaukanal: nicht Teil dieses Erlaubnisscheins, eigener Erlaubnisschein nötig",
+   "zeitraum": null,
+   "anzeige": "Eigener Erlaubnisschein nötig",
+   "typ": "ort"
+  },
+  "verpachtete_flaechen": {
+   "art": "einschraenkungen",
+   "text": "In Bereichen der von der WSV verpachteten oder vermieteten Land- und Wasserflächen ist die Fischereiausübung nur mit Einwilligung des Pächters oder Mieters gestattet.",
+   "zeitraum": null,
+   "anzeige": null,
+   "typ": "nicht_kartierbar"
+  }
+ },
+ "nicht_kartierbar": [
+  "Im unmittelbaren Anlagenbereich (Fischereianlagen der Erwerbsfischer) ist eine Fischereiausübung untersagt.",
+  "Ufer mit Baustellen oder mit Lebendverbau sowie abbruchgefährdete Ufer",
+  "In Bereichen der von der WSV verpachteten oder vermieteten Land- und Wasserflächen ist die Fischereiausübung nur mit Einwilligung des Pächters oder Mieters gestattet."
+ ],
+ "allgemein": [
+  "Fischfang von Wasserfahrzeugen aus ist von der Erlaubnis ausgenommen.",
+  "Betreten der Betriebsanlagen (z. B. Schleusengelände, Hafenanlagen) verboten; es gilt die Wasserstraßen-Betriebsanlagenverordnung."
+ ],
+ "offen": [
+  "gieselau_audorf_flemhude_achterwehr"
+ ],
+ "osm_abgerufen": "2026-11-04"
+}
