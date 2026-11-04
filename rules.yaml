@@ -29,7 +29,8 @@ ausgenommen:
         # ausser: Rendsburg Kreishafen, Fußgänger-Ersatzfähre nur bei Bauarbeiten/Events (dort Steinpackung, frei)
         - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90, ausser: [448796387]}
         # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren
-        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10}
+        # ausser: kleine private Stege am Borgstedter See/Enge (bei hejfish grün)
+        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10, ausser: [117930478, 117930485, 1182773764, 1556540717, 517064726]}
         # Umschlagstellen: Hafen- und Werftflächen (Rendsburg Kreishafen, Nobiskrug, Saatsee …)
         - {osm: {landuse: harbour}, puffer_m: 10}
         - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}
@@ -40,6 +41,8 @@ ausgenommen:
         - {km: [61.70, 61.735], ufer: Nord, grund: Kreishafen Rendsburg, Wechsel der Uferbefestigung erst bei km 61,735}
         - {km: [63.10, 63.414], ufer: Nord, grund: Saatsee-Werft, Kanalufer westlich der Hafeneinfahrt (wie hejfish)}
         - {km: [64.08, 64.20], ufer: Nord, grund: Saatsee-Werft, OSM-Fläche reicht über den Hafen hinaus (wie hejfish)}
+        - {gewaesser: Borgstedter-See, km: [2.70, 2.86], ufer: Süd, grund: Borgstedter Enge, Hafen Rader Insel liegt gegenüber}
+        - {gewaesser: Borgstedter-See, km: [2.70, 2.855], ufer: Nord, grund: Brücke Borgstedter Enge, rot erst ab dem Hafen (wie hejfish)}
 
   - id: brunsbuettel_haefen
     text: "Betriebs- und Ölhafen Brunsbüttel"
@@ -81,7 +84,7 @@ ausgenommen:
     geometrie:                      # ergänzt
       gewaesser: Borgstedter-See
       von: {osm: {bridge:name: Rader Hochbrücke}}   # Schnitt A7-Brücke mit dem Nordufer
-      bis: {km: 0.0, offen: true}   # bis zum NOK: km 0,0 und die Enge dahinter bis Bandende
+      bis: {km: 0.34}               # Ostende wie hejfish (54.3419, 9.7443), östlich davon frei
 
   - id: borgstedter_see_sued
     text: "Südufer des Borgstedter Sees mit Enge von der westlichen Starkstromleitung über den Borgstedter See bis zum NOK/Schirnauer See"
@@ -91,7 +94,7 @@ ausgenommen:
     geometrie:                      # ergänzt
       gewaesser: Borgstedter-See
       von: {osm: {power: line}, wahl: westlichste}  # westlichste Freileitung, die das Südufer kreuzt
-      bis: {km: 0.0, offen: true}
+      bis: {km: 0.31}               # Ostende wie hejfish (54.3405, 9.7449), östlich davon frei
 
   - id: kiel_holtenau
     text: "zwischen Hochbrücke Kiel-Holtenau (Olympiabrücke) und Schleuse Kiel-Holtenau (Nord- und Südufer)"

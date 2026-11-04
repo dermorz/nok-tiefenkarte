@@ -18,8 +18,9 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
   - Anlegebrücken und Umschlagstellen digitalisieren (bisher nur Fähren aus OSM, Puffer 50 m prüfen)
   - Mündung der Borgstedter Enge: ~80 m Südufer zählen als NOK (grün) – soll die Enge-Regel gelten?
   - Flemhuder See, Zufahrt Obereider: Band verläuft Nord–Süd, Nord/Süd-Zuordnung prüfen
-- [ ] Gescannte Bände (NOK-37-39, NOK-86-88): Uferlinien fehlen (nur Bild im PDF), Angel-Layer hat
-      dort Lücken
+- [x] Gescannte Bände (NOK-37-39, NOK-86-88): Tiefenkoten per Ziffern-Vorlagen aus NOK-88-91 gelesen (`scan.py`),
+      gleiche Farbskala; Uferlinie/Achse aus den Pixelfarben, km an den Nachbarblättern verankert (`ufer.py`).
+      Einzelne Fehllesungen möglich (kleine Farbflecken)
 - [x] Angeln, Abgleich mit der hejfish-Gewässerkarte (https://www.hejfish.com/d/12543-nord-ostsee-kanal, nur
       als Vergleich, Geometrie nicht übernommen): Fährbuchten ± 90 m, Stege, Hafen-/Werftflächen und Häfen
       Brunsbüttel aus OSM. Rote hejfish-Strecken im Geltungsbereich zu 74 % abgedeckt.
@@ -35,11 +36,17 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
 - [x] Rendsburg Süd wie hejfish: km 61,53–61,70 befestigter Umschlagplatz rot (`abschnitte` in `rules.yaml`),
       61,70–61,89 Steinpackung grün (Atlas ohne blaue Linie, `UFER_ERGAENZT`), Ersatzfähre
       way/448796387 (nur bei Bauarbeiten/Events) zählt nicht als Fähranlage
+- [x] Borgstedter See/Enge wie hejfish: Rot von A7 bzw. Leitung bis Nord km 0,34 / Süd km 0,31; an der Enge nur der
+      Hafen Rader Insel rot, private Stege Borgstedt grün (`ausser`, `frei` mit `gewaesser`)
+- [x] Objektregeln färben nur Ufer nahe am Objekt (vorher: jedes Ufer mit gleichem km und gleicher Seite, z. B.
+      Südspitze Rader Insel)
+- [x] Flemhuder See ganz aus der Karte (`AUSGELASSEN` in `build.py`)
+- [ ] Ost-Ende Kiel-Holtenau mit hejfish abgleichen (Südufer ab Industrie bis Hochbrücke rot, Nordufer östlich der
+      Hochbrücke rot); Geltungsbereich endet bei km 96,63
 - [x] Eider-Ufer nördlich vom Kanal (km 55,5–60) nicht einfärben, eigener Erlaubnisschein
       (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); Flemhuder See ganz ohne Uferfarben (`FREMDE_GEWAESSER`, im Kanalblatt 83-86 `FREMDE_UFERPUNKTE`)
 - [x] `frei` in `rules.yaml`: von Hand freie Stücke trotz OSM-Objekt (Kreishafen Nord bis km 61,735, Saatsee-Werft
       nur km 63,414–64,08 wie hejfish)
-- [ ] Gescannte Bände: Tiefenfarben noch in Originallegende (keine Koten im PDF)
 - [ ] Flemhuder See: Bezugshorizont PN 5,00 m statt 4,80 m wie im Kanal – Tiefen 0,2 m anders bezogen
 - [ ] Kanalfähre Brunsbüttel: Anleger landen bei km 2,02 (Nord) und 2,40 (Süd) – OSM-Linie prüfen
 - [ ] Werft Saatsee: eigene km-Teilung oder Kanal-km? (derzeit eigene)

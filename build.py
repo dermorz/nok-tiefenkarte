@@ -28,6 +28,9 @@ UTM = Transformer.from_crs(25832, 4326, always_xy=True)
 TO_UTM = Transformer.from_crs(4326, 25832, always_xy=True)
 
 
+AUSGELASSEN = ("Flemhuder-See",)   # Bände, die nicht in die Karte kommen (eigener Erlaubnisschein, nicht gebraucht)
+
+
 # --------------------------------------------------------------------------- download
 def fetch():
     PDF_DIR.mkdir(parents=True, exist_ok=True)
@@ -366,14 +369,19 @@ def recolor(pdf, pno, frame, k, s, td):
     lab, n = ndimage.label(~mask)                                          # Löcher unter Zahlen/Linien
     mask |= np.r_[False, np.bincount(lab.ravel())[1:] * px_m ** 2 < 25][lab]
     del lab
+    P = np.c_[(kot[:, 0] - ox) * k, (kot[:, 1] - oy) * k]
+    return paint(mask, P, kot[:, 2], px_m, np.array(ppm(f"{td}/w.pdf", 1, frame, k, f"{td}/w")))
+
+
+def paint(mask, P, z, px_m, out):
+    """Tiefenfläche mask aus Koten (P in px, z in m) einfärben und mit den Linien out (auf Weiß) multiplizieren."""
     # Tiefe auf ~0,5-m-Gitter aus den Koten (linear, außerhalb der Hülle nächster Punkt)
     H, W = mask.shape
     f = max(1, round(0.5 / px_m))
     gy, gx = np.mgrid[0:H:f, 0:W:f]
-    P = np.c_[(kot[:, 0] - ox) * k, (kot[:, 1] - oy) * k]
-    dep = interpolate.LinearNDInterpolator(P, kot[:, 2])(gx, gy)
+    dep = interpolate.LinearNDInterpolator(P, z)(gx, gy)
     nan = np.isnan(dep)
-    dep[nan] = interpolate.NearestNDInterpolator(P, kot[:, 2])(gx[nan], gy[nan])
+    dep[nan] = interpolate.NearestNDInterpolator(P, z)(gx[nan], gy[nan])
     dep = dep.astype(np.float32)
     # Schummerung, Licht von NW 45°: >0 aufhellen, <0 abdunkeln (wie im Original). Modell auf ~3 m
     # geglättet, sonst zeichnen sich die Dreiecke der Koten-Interpolation ab.
@@ -384,7 +392,6 @@ def recolor(pdf, pno, frame, k, s, td):
     shade = np.clip(hs - math.sin(alt), -0.12, 0.15).astype(np.float32)
     up = lambda a: np.asarray(Image.fromarray(a).resize((gx.shape[1] * f, gx.shape[0] * f), Image.BILINEAR))[:H, :W]
     dep, shade = up(dep), up(shade)
-    out = np.array(ppm(f"{td}/w.pdf", 1, frame, k, f"{td}/w"))             # Linien auf Weiß
     for r in range(0, H, 512):                                             # zeilenweise: Speicher
         sl = slice(r, r + 512)
         c = PAL[np.searchsorted(EDGES, dep[sl], side="right")]
@@ -400,6 +407,9 @@ def render(pdf, pno, frame, dpi, s):
     k = dpi / 72
     with tempfile.TemporaryDirectory() as td:
         im = recolor(pdf, pno, frame, k, s, td)
+        if im is None and not pymupdf.open(pdf)[pno - 1].get_text("words"):   # Scan: Blatt nur als Bild
+            import scan
+            im = scan.recolor(pdf, pno, frame, k, s, td)
         if im is None:
             print(f"{Path(pdf).name} S. {pno}: Originalfarben (keine Vektor-Legende/Koten)", file=sys.stderr)
             im = ppm(pdf, pno, frame, k, f"{td}/p")
@@ -647,6 +657,7 @@ def main():
     ap.add_argument("-j", type=int, default=4, help="parallele Blätter (RAM: ~3 GB je Blatt)")
     a = ap.parse_args()
     pdfs = sorted(PDF_DIR.glob("*.pdf")) if a.offline else fetch()
+    pdfs = [p for p in pdfs if not any(x in p.name for x in AUSGELASSEN)]
     jobs = [j for j in sheet_ids(pdfs) if not a.only or a.only in j[0]]
     with ProcessPoolExecutor(a.j) as ex:
         rows = list(ex.map(process, jobs))

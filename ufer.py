@@ -87,16 +87,85 @@ def extract(r):
                 km_labels=[[k, *[round(v, 7) for v in fwd(*c)]] for k, c in kms])
 
 
+def pixel_lines(m, min_px=200):
+    """Dünne Linienmaske -> Polylinien (Pixel): je Komponente spaltenweise Mitte (Linien laufen etwa waagerecht)."""
+    from scipy import ndimage
+    lab, n = ndimage.label(ndimage.binary_dilation(m, iterations=2))
+    out = []
+    for i, sl in enumerate(ndimage.find_objects(lab)):
+        ys, xs = np.nonzero((lab[sl] == i + 1) & m[sl])
+        if xs.size == 0 or xs.max() - xs.min() < min_px:
+            continue
+        cols = np.unique(xs)[::3]
+        out.append([(sl[1].start + x, sl[0].start + ys[xs == x].mean()) for x in cols])
+    return out
+
+
+def extract_scan(r, neighbours):
+    """Gescannter Band: Uferlinie/Achse aus den Pixelfarben, km aus der Bogenlänge der Achse, verankert an den
+    km-Labels der Nachbarblätter (Vektor), die ins Blatt reichen."""
+    K = 3
+    fwd, _, _ = sheet_model(r)
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        a = np.asarray(build.ppm(Path("data/pdf") / r["pdf"], r["page"], r["frame"], K, f"{td}/o")).astype(np.int16)
+    ox, oy = int(r["frame"][0] * K) / K, int(r["frame"][1] * K) / K
+    ll = lambda line: [[round(v, 7) for v in fwd(ox + x / K, oy + y / K)] for x, y in line]
+    shore = [ll(l) for l in pixel_lines(np.abs(a - (73, 155, 254)).max(2) < 30)]
+    # Achse: im Scan in Stücke zerfallen (JPEG) -> alle Stücke nach x aneinanderhängen
+    parts = sorted(pixel_lines(np.abs(a - (0, 0, 192)).max(2) < 90, 100), key=lambda l: l[0][0])
+    if not parts:
+        raise ValueError(f"{r['id']}: keine Achse im Scan")
+    axis = [ll([p for l in parts for p in l])]
+    A = utm(axis[0])
+    s = np.r_[0, np.cumsum(np.hypot(*np.diff(A, axis=0).T))]
+    from scipy.spatial import cKDTree
+    t = cKDTree(A)
+    anchors = []
+    for e in neighbours:
+        by = {}
+        for k, lon, lat in e["km_labels"]:
+            by.setdefault(k, []).append((lon, lat))
+        for k, v in by.items():
+            if len(v) == 2:
+                d, j = t.query(utm(v).mean(0))
+                if d < 30 and 0 < j < len(A) - 1:
+                    anchors.append((s[j], k))
+    if len(anchors) < 2:
+        raise ValueError(f"{r['id']}: zu wenige km-Anker aus Nachbarblättern ({len(anchors)})")
+    S, Kk = np.array(anchors).T
+    b, c = np.polyfit(S, Kk, 1) if np.ptp(S) > 500 else (np.sign(np.polyfit(S, Kk, 1)[0]) / 1000, 0)
+    if np.ptp(S) <= 500:
+        c = np.mean(Kk - b * S)
+    print(f"  {r['id']}: {len(anchors)} km-Anker, {b * 1000:.4f} km/km, Rest {np.abs(Kk - b * S - c).max() * 1000:.1f} m")
+    kms = []
+    for k in np.arange(math.ceil(min(c, c + b * s[-1]) * 10) / 10, max(c, c + b * s[-1]), 0.1):
+        x, y = np.interp((k - c) / b, s, A[:, 0]), np.interp((k - c) / b, s, A[:, 1])
+        lon, lat = UTM.transform(x, y)
+        kms += [[round(float(k), 1), round(lon, 7), round(lat, 7)]] * 2   # Paar wie "ein Label je Ufer"
+    return dict(id=r["id"], km=r["km"], folder=build.folder_of(r), date=r["date"],
+                shore=shore, axis=axis, km_labels=kms)
+
+
 def cmd_extract(a):
     OUT.mkdir(parents=True, exist_ok=True)
+    scans = []
     for p in sorted(Path("out/sheets").glob("*.json")):
         r = json.loads(p.read_text())
-        if not r["status"].startswith("OK") or r["source"] != "vector" or (a.only and a.only not in r["id"]):
+        if not r["status"].startswith("OK") or (a.only and a.only not in r["id"]):
+            continue
+        if r["source"] == "scan":
+            scans.append(r)
             continue
         e = extract(r)
         (OUT / f"{r['id']}.json").write_text(json.dumps(e))
         print(f"{r['id']:34s} Ufer {len(e['shore']):3d} Linien {sum(map(len, e['shore'])):6d} Pkt  "
               f"Achse {len(e['axis']):3d}  km-Labels {len(e['km_labels'])}")
+    vec = [json.loads(p.read_text()) for p in sorted(OUT.glob("*.json"))]
+    for r in scans:                         # nach den Vektorblättern: deren km-Labels verankern die Scans
+        e = extract_scan(r, [v for v in vec if v["id"] != r["id"] and group_of(v) == "NOK"])
+        (OUT / f"{r['id']}.json").write_text(json.dumps(e))
+        print(f"{r['id']:34s} Ufer {len(e['shore']):3d} Linien {sum(map(len, e['shore'])):6d} Pkt  (Scan)")
 
 
 def cmd_osm(_):
@@ -145,7 +214,6 @@ NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer
 FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118)]            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
 FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120)]     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
-FREMDE_GEWAESSER = {"Flemhuder-See"}   # eigener Erlaubnisschein: Band ganz ohne Uferfarben (Kanalufer zählen zum NOK)
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
 UFER_ERGAENZT = [((61.70, 61.89), [(9.6689895, 54.2905442), (9.6716957, 54.2909406)])]   # Rendsburg Süd, Steinpackung
@@ -194,7 +262,7 @@ class Sheet:
 
     def shores(self, step=2.0):
         """Uferlinien verdichtet (≤ step m), mit km/Seite, auf den eigenen km-Bereich beschnitten."""
-        for line in self.e["shore"] if self.group not in FREMDE_GEWAESSER else []:
+        for line in self.e["shore"]:
             P = utm(line)
             seg = np.hypot(*np.diff(P, axis=0).T)
             Q = [P[0]]
@@ -300,8 +368,11 @@ def resolve(rules, sheets, osm):
                     lim = spec.get("km")
                     if lim and not (grp == "NOK" and lim[0] <= ks.mean() <= lim[1]):   # km gilt nur für den Kanal
                         continue
+                    sel = [i for i in idx if shore[1][i] == grp and shore[2][i] == sd]
                     for run in np.split(ks, np.where(np.diff(ks) > 0.03)[0] + 1):
-                        iv.append((r["id"], grp, [sd], run[0] - dk, run[-1] + dk))
+                        # nur Ufer nahe am Objekt: gleiche km/Seite gibt es sonst auch an anderen Ufern (Enge, Inseln)
+                        pts = shore[0][[i for i in sel if run[0] <= shore[3][i] <= run[-1]]]
+                        iv.append((r["id"], grp, [sd], run[0] - dk, run[-1] + dk, (cKDTree(pts), dk * 1000 + 30)))
                         n += 1
                         name = el["tags"].get("name") or "/".join(f"{k}={v}" for k, v in spec["osm"].items() if not isinstance(v, list)) or "OSM"
                         log.append(f"{r['id']}: {name} (way/{el['id']}) -> {grp} {sd} km {run[0] - dk:.3f}–{run[-1] + dk:.3f}")
@@ -334,7 +405,7 @@ def resolve(rules, sheets, osm):
             g, sides = r.get("geometrie", {}), {"Nord": ["Nord"], "Süd": ["Süd"], "beide": ["Nord", "Süd"]}.get(r.get("ufer"), ["Nord", "Süd"])
             try:
                 if r["typ"] == "km":
-                    iv.append((r["id"], "NOK", sides, r["von_km"], r["bis_km"]))
+                    iv.append((r["id"], "NOK", sides, r["von_km"], r["bis_km"], None))
                     log.append(f"{r['id']}: NOK {'/'.join(sides)} km {r['von_km']}–{r['bis_km']}")
                 elif r["typ"] == "ort" and "von" in g:
                     side = sides[0]
@@ -343,20 +414,21 @@ def resolve(rules, sheets, osm):
                     lo, hi = sorted((von_k, bis_k))
                     if g["bis"].get("offen"):
                         lo, hi = (-np.inf, hi) if bis_k <= von_k else (lo, np.inf)
-                    iv.append((r["id"], g["gewaesser"], sides, lo, hi))
+                    iv.append((r["id"], g["gewaesser"], sides, lo, hi, None))
                     log.append(f"{r['id']}: {g['gewaesser']} {side} von {von_t} bis {bis_t}{' (offen)' if g['bis'].get('offen') else ''}")
                 elif "objekte" in g or "abschnitte" in g:
                     objects(r, g) if "objekte" in g else None
                     for st in g.get("abschnitte", []):   # von Hand: Kanal-km, Seite
-                        iv.append((r["id"], "NOK", [st["ufer"]], *st["km"]))
+                        iv.append((r["id"], "NOK", [st["ufer"]], *st["km"], None))
                         log.append(f"{r['id']}: NOK {st['ufer']} km {st['km'][0]}–{st['km'][1]} (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
                     for st in g.get("frei", []):         # von Hand ausgenommen: schneidet die Intervalle der Regel
                         a, b = st["km"]
-                        cut = [x for x in iv if x[0] == r["id"] and x[1] == "NOK" and st["ufer"] in x[2] and x[3] < b and x[4] > a]
+                        gw = st.get("gewaesser", "NOK")
+                        cut = [x for x in iv if x[0] == r["id"] and x[1] == gw and st["ufer"] in x[2] and x[3] < b and x[4] > a]
                         for x in cut:
                             iv.remove(x)
-                            iv += [(*x[:4], a)] * bool(x[3] < a) + [(*x[:3], b, x[4])] * bool(x[4] > b)
-                        log.append(f"{r['id']}: NOK {st['ufer']} km {a}–{b} frei (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
+                            iv += [(*x[:4], a, x[5])] * bool(x[3] < a) + [(*x[:3], b, x[4], x[5])] * bool(x[4] > b)
+                        log.append(f"{r['id']}: {gw} {st['ufer']} km {a}–{b} frei (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
                 elif r["typ"] != "nicht_kartierbar":
                     open_.append(r["id"])
             except ValueError as ex:
@@ -395,8 +467,9 @@ def cmd_build(a):
             def key(i):
                 if not keep[i]:
                     return None
-                ids = tuple(sorted(rid for rid, g, sides, lo, hi in iv
-                                   if g == s.group and side[i] in sides and lo <= km[i] <= hi))
+                ids = tuple(sorted(rid for rid, g, sides, lo, hi, near in iv
+                                   if g == s.group and side[i] in sides and lo <= km[i] <= hi
+                                   and (near is None or near[0].query(Q[i])[0] <= near[1])))
                 inside = s.group != "NOK" or gb["von_km"] <= km[i] <= gb["bis_km"]
                 return str(side[i]), ids, bool(inside)
             run, cur = [], None

@@ -41,7 +41,10 @@ Bei einem neuen Stand auf ELWIS werden ersetzte PDFs automatisch gelöscht und d
   Tiefenflächen werden im PDF-Inhaltsstrom weiß gesetzt (`rg` bzw. ICC-`scn`) (Linien, Zahlen bleiben), die Tiefe wird aus den
   Tiefenkoten linear interpoliert, eingefärbt, geschummert und mit der Planzeichnung multipliziert. Aus
   der Farbe allein geht es nicht: durch die Schummerung sind Kanal-Klassen zu ~38 % nicht eindeutig.
-  Gescannte Bände behalten die Originalfarben.
+  Gescannte Bände: Tiefenkoten über Ziffern-Vorlagen gelesen (Vorlagen aus den Zeichen eines Vektorblatts
+  gleicher Schrift, Tesseract scheitert an den kursiven, eng stehenden Zahlen), Ausreißer gegen Farbklasse
+  und Nachbarn raus; Tiefenfläche aus den Legendenfarben. Uferlinie/Achse dort aus den Pixelfarben, km
+  über die Bogenlänge der Achse an den km-Labels der Nachbarblätter verankert.
 - **Raster**: Rahmen mit pdftoppm, ~0,3 m/px (1:2000), Maske „farbig & hell“ (Sättigung > 22,
   Helligkeit > 150), Opening ×4 gegen Linien der Basiskarte, Closing, Löcher füllen, kleine
   Komponenten weg, 3 m Dilatation, 1 m weicher Rand. Warp je Kachel (≤ 4096 px) nach Lon/Lat,
@@ -57,7 +60,9 @@ mobiler Viewport, simulierte Geolocation).
 
 - **Angeln**: Uferlinien (hellblau, 0,85 pt) und km-Labels aus dem PDF; km und Ufer (Nord/Süd) über die
   Achse aus den Label-Paaren. Regeln in `rules.yaml`, Grenzobjekte aus OSM (`make osm`, ODbL): Brücken/Leitungen als Grenzpunkte,
-  Fähren (Endpunkte), Stege, Hafen- und Werftflächen als `objekte` (berührte Uferstücke ± Puffer). Farbe
+  Fähren (Endpunkte), Stege, Hafen- und Werftflächen als `objekte` (berührte Uferstücke ± Puffer, nur nahe am
+  Objekt; `ausser` für einzelne OSM-IDs), dazu von Hand `abschnitte` (rot) und `frei` (Abgleich hejfish/vor Ort).
+  Fremde Gewässer (Eider, Achterwehrer Kanal) per `FREMDE_UFER*` in `ufer.py` ausgeblendet. Farbe
   wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen).
 
 Offene Punkte: `plan.md`.
