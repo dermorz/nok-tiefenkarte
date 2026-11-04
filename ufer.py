@@ -223,6 +223,7 @@ FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118),            # Eider nördlich vo
 # wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
 FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120),     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
                      ("NOK", 15.25, 15.65, "Süd", 100),
+                     ("NOK", 5.45, 6.00, "Süd", 100),       # Landeshafen Ostermoor: ganz aus extra_ufer (Blattgrenze quer durchs Becken)
                      ("NOK", 5.85, 5.95, "Nord", 110),     # Graben-Mündung km 5,9 (Kanalufer ≤ 96 m)
                      ("NOK", 7.70, 7.92, "Nord", 110)]     # Nebengewässer km 7,7–7,9 (dort ≥ 113 m)   # Wilsterau (Schöpfwerk), Kanalufer dort ≤ 95 m
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
