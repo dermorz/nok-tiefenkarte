@@ -112,7 +112,8 @@ function shoreInfo(p) {
   const d = today(), st = shoreStatus(p, d);
   const head = { gruen: "Laut Schein nicht ausgenommen", rot: "Ausgenommen – Angeln vom Ufer nicht erlaubt",
     orange: "Erlaubt mit Einschränkung", grau: "Außerhalb des Geltungsbereichs" }[st];
-  const km = `${p.gewaesser === "NOK" ? "NOK" : p.gewaesser.replace(/-/g, " ")} ${p.ufer}ufer km ${fmt(Math.min(...p.km), 2)}–${fmt(Math.max(...p.km), 2)}`;
+  const km = `${p.gewaesser === "NOK" ? "NOK" : p.gewaesser.replace(/-/g, " ")} ${p.ufer}ufer` +
+    (p.km ? ` km ${fmt(Math.min(...p.km), 2)}–${fmt(Math.max(...p.km), 2)}` : ` (Uferlinie aus ${p.quelle})`);
   const rules = p.rules.map((id) => {
     const r = app.rules.rules[id], on = inPeriod(r.zeitraum, d);
     const cls = !on ? "gruen" : r.art === "ausgenommen" ? "rot" : "orange";
@@ -128,15 +129,16 @@ function shoreInfo(p) {
 async function loadShores() {
   if (!app.angel || app.map.getZoom() < 12) return;
   const view = app.map.getBounds().pad(0.3);
-  for (const s of app.index.sections) {
-    if (!s.ufer || app.shoreLoaded.has(s.id) || !view.intersects(s.bounds)) continue;
-    app.shoreLoaded.add(s.id);
-    fetch(`ufer/${s.id}.geojson?v=${app.index.version}`).then((r) => r.json()).then((gj) => {
+  const ids = app.index.sections.filter((s) => s.ufer && view.intersects(s.bounds)).map((s) => s.id).concat("extra");
+  for (const id of ids) {   // extra: Uferlinien, die der Atlas nicht zeichnet (aus OSM), immer mit
+    if (app.shoreLoaded.has(id)) continue;
+    app.shoreLoaded.add(id);
+    fetch(`ufer/${id}.geojson?v=${app.index.version}`).then((r) => r.json()).then((gj) => {
       L.geoJSON(gj, {
         style: (f) => ({ color: COLORS[shoreStatus(f.properties, today())], weight: 6, opacity: 0.9, lineCap: "butt" }),
         onEachFeature: (f, layer) => layer.on("click", (e) => { L.DomEvent.stop(e); show(shoreInfo(f.properties)); }),
       }).addTo(app.shoreGroup);
-    }).catch(() => app.shoreLoaded.delete(s.id));
+    }).catch(() => app.shoreLoaded.delete(id));
   }
 }
 async function setAngel(on) {

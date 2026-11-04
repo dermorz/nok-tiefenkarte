@@ -177,8 +177,11 @@ def cmd_osm(_):
      way["power"="line"](54.25,9.55,54.40,9.85);
      way["man_made"="pier"](53.85,9.10,54.40,10.20);
      way["landuse"="harbour"](53.85,9.10,54.40,10.20);
-     way["landuse"="industrial"]["industrial"~"^(port|shipyard)$"](53.85,9.10,54.40,10.20););
+     way["landuse"="industrial"]["industrial"~"^(port|shipyard)$"](53.85,9.10,54.40,10.20);
+  way(id:{extra}););
     out geom tags;"""
+    extra = ",".join(str(e["osm"]) for e in __import__("yaml").safe_load(Path("rules.yaml").read_text()).get("extra_ufer", []))
+    q = q.replace("{extra}", extra or "0")
     for url in ("https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"):
         r = requests.post(url, data={"data": q}, headers={"User-Agent": "nok-tiefenkarte/1.0"}, timeout=180)
         if r.ok:
@@ -418,9 +421,14 @@ def resolve(rules, sheets, osm):
                     log.append(f"{r['id']}: {g['gewaesser']} {side} von {von_t} bis {bis_t}{' (offen)' if g['bis'].get('offen') else ''}")
                 elif "objekte" in g or "abschnitte" in g:
                     objects(r, g) if "objekte" in g else None
-                    for st in g.get("abschnitte", []):   # von Hand: Kanal-km, Seite
-                        iv.append((r["id"], "NOK", [st["ufer"]], *st["km"], None))
-                        log.append(f"{r['id']}: NOK {st['ufer']} km {st['km'][0]}–{st['km'][1]} (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
+                    for st in g.get("abschnitte", []):   # von Hand: km, Seite; bei: nur Ufer ≤ 60 m an dieser Linie
+                        near = None
+                        if "bei" in st:                    # Linie durch die Punkte, auf 10 m verdichtet
+                            B = utm([q[::-1] for q in st["bei"]])
+                            B = np.vstack([a + (b - a) * t for a, b in zip(B[:-1], B[1:]) for t in np.linspace(0, 1, 30)])
+                            near = (cKDTree(B), 60)
+                        iv.append((r["id"], st.get("gewaesser", "NOK"), [st["ufer"]], *st["km"], near))
+                        log.append(f"{r['id']}: {st.get('gewaesser', 'NOK')} {st['ufer']} km {st['km'][0]}–{st['km'][1]} (von Hand{', ' + st['grund'] if 'grund' in st else ''})")
                     for st in g.get("frei", []):         # von Hand ausgenommen: schneidet die Intervalle der Regel
                         a, b = st["km"]
                         gw = st.get("gewaesser", "NOK")
@@ -434,6 +442,23 @@ def resolve(rules, sheets, osm):
             except ValueError as ex:
                 open_.append(r["id"]); log.append(f"{r['id']}: FEHLER {ex}")
     return iv, log, open_
+
+
+def extra_lines(rules, osm):
+    """extra_ufer -> GeoJSON-Features: Ringstück von 'von' nach 'bis' in der Richtung, die über 'ueber' führt."""
+    ways = {el["id"]: el for el in osm["elements"] if el["type"] == "way"}
+    feats = []
+    for e in rules.get("extra_ufer", []):
+        g = [(p["lon"], p["lat"]) for p in ways[e["osm"]]["geometry"]]
+        n = len(g) - 1 if g[0] == g[-1] else len(g)
+        P = utm(g[:n])
+        i, j, k = (int(np.hypot(*(P - utm([e[x][::-1]])[0]).T).argmin()) for x in ("von", "ueber", "bis"))
+        fwd = [(i + t) % n for t in range((k - i) % n + 1)]
+        path = fwd if j in fwd else [(i - t) % n for t in range((i - k) % n + 1)]
+        feats.append(dict(type="Feature", geometry=dict(type="LineString", coordinates=[list(g[t]) for t in path]),
+                          properties=dict(ufer=e["ufer"], rules=e["regeln"], geltung=True, gewaesser=e["gewaesser"],
+                                          quelle="OpenStreetMap")))
+    return feats
 
 
 def cmd_build(a):
@@ -498,6 +523,8 @@ def cmd_build(a):
         nicht_kartierbar=[flat[k]["text"] for k in flat if flat[k]["typ"] == "nicht_kartierbar"],
         allgemein=rules.get("allgemein", []), offen=open_, osm_abgerufen=osm.get("_abgerufen")),
         ensure_ascii=False, indent=1))
+    (dest / "extra.geojson").write_text(json.dumps(dict(type="FeatureCollection", features=extra_lines(rules, osm)),
+                                                   separators=(",", ":")))
     idx = Path("site/index.json")   # neuer Datenstand, sonst liefert der Service Worker alte Uferlinien (?v=)
     if idx.exists():
         idx.write_text(json.dumps(json.loads(idx.read_text()) | dict(version=datetime.now().strftime("%Y%m%d%H%M"))))

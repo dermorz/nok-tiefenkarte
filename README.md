@@ -62,7 +62,8 @@ mobiler Viewport, simulierte Geolocation).
   Achse aus den Label-Paaren. Regeln in `rules.yaml`, Grenzobjekte aus OSM (`make osm`, ODbL): Brücken/Leitungen als Grenzpunkte,
   Fähren (Endpunkte), Stege, Hafen- und Werftflächen als `objekte` (berührte Uferstücke ± Puffer, nur nahe am
   Objekt; `ausser` für einzelne OSM-IDs), dazu von Hand `abschnitte` (rot) und `frei` (Abgleich hejfish/vor Ort).
-  Fremde Gewässer (Eider, Achterwehrer Kanal) per `FREMDE_UFER*` in `ufer.py` ausgeblendet. Farbe
+  Fremde Gewässer (Eider, Achterwehrer Kanal) per `FREMDE_UFER*` in `ufer.py` ausgeblendet. Ufer, die der
+  Atlas nicht zeichnet (Rendsburger Hafen), als `extra_ufer` aus dem Rand einer OSM-Wasserfläche. Farbe
   wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen).
 
 Offene Punkte: `plan.md`.

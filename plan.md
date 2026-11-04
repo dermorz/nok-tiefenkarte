@@ -40,6 +40,9 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
       Hafen Rader Insel rot, private Stege Borgstedt grün (`ausser`, `frei` mit `gewaesser`)
 - [x] Objektregeln färben nur Ufer nahe am Objekt (vorher: jedes Ufer mit gleichem km und gleicher Seite, z. B.
       Südspitze Rader Insel)
+- [x] Extra-Uferlinien aus OSM-Wasserflächen (`extra_ufer` in `rules.yaml` -> `site/ufer/extra.geojson`, immer
+      geladen): Rendsburger Hafen rot, Westufer Obereider bis Borgstedter Brücke grün; Südufer der Zufahrt rot
+- [x] Saatsee-Werft wie hejfish: ganzes Becken rot, Kanalufer bis zur Molenwurzel grün
 - [x] Flemhuder See ganz aus der Karte (`AUSGELASSEN` in `build.py`)
 - [x] Ost-Ende Kiel-Holtenau wie hejfish: Süd km 95,36–96,51 rot (von Hand), Olympiabrücke–Schleuse
       (km 96,63–97,95) beide Ufer rot (`kiel_holtenau`, `geltungsbereich.auch` statt grau)

@@ -190,6 +190,7 @@ def main():
         files = sorted(manifests[r["id"]])
         if (SITE / "ufer" / f"{r['id']}.geojson").exists():
             files.append(f"ufer/{r['id']}.geojson")
+            files.append("ufer/extra.geojson")   # klein, in jedem Abschnitt (Hafen Rendsburg u. a.)
         size = sum((SITE / f).stat().st_size for f in files)
         total += size
         (SITE / "sections" / f"{r['id']}.json").write_text(json.dumps(dict(files=files, bytes=size)))

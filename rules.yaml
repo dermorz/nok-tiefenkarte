@@ -17,6 +17,14 @@ geltungsbereich:
   bis_km: 96.63  # Hochbrücke Kiel-Holtenau/Olympiabrücke, senkrechtes Lot der östlichen Außenseite
   auch: [kiel_holtenau]   # außerhalb, aber als Verbot gezeichnet (statt grau)
 
+# Uferlinien, die der Tiefenatlas nicht zeichnet: Rand einer OSM-Wasserfläche (ODbL) von – über – bis
+# (lat, lon; nächster Stützpunkt), mit den Regeln, die dort gelten ([] = grün).
+extra_ufer:
+  - {osm: 53261321, von: [54.31197, 9.70367], ueber: [54.30888, 9.66266], bis: [54.31312, 9.70203],
+     gewaesser: Obereider, ufer: Hafen, regeln: [anleger_faehren]}            # Rendsburger Hafen (Umschlagstelle)
+  - {osm: 76192053, von: [54.31462, 9.70484], ueber: [54.31722, 9.70695], bis: [54.32597, 9.71351],
+     gewaesser: Obereider, ufer: West, regeln: []}                           # Hafenecke bis Borgstedter Brücke
+
 # Uferbereiche, von denen aus der Fischfang NICHT erlaubt ist -> rot
 ausgenommen:
   - id: anleger_faehren
@@ -30,8 +38,8 @@ ausgenommen:
         # ausser: Rendsburg Kreishafen, Fußgänger-Ersatzfähre nur bei Bauarbeiten/Events (dort Steinpackung, frei)
         - {osm: {route: ferry}, enden: true, abstand_m: 60, puffer_m: 90, ausser: [448796387]}
         # Anlegebrücken: Stege/Pieranlagen, die das Ufer berühren
-        # ausser: kleine private Stege am Borgstedter See/Enge (bei hejfish grün)
-        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10, ausser: [117930478, 117930485, 1182773764, 1556540717, 517064726]}
+        # ausser: kleine private Stege am Borgstedter See/Enge und Westufer Obereider (bei hejfish grün)
+        - {osm: {man_made: pier}, abstand_m: 15, puffer_m: 10, ausser: [117930478, 117930485, 1182773764, 1556540717, 517064726, 1081162622]}
         # Umschlagstellen: Hafen- und Werftflächen (Rendsburg Kreishafen, Nobiskrug, Saatsee …)
         - {osm: {landuse: harbour}, puffer_m: 10}
         - {osm: {landuse: industrial, industrial: [port, shipyard]}, puffer_m: 10}
@@ -39,9 +47,12 @@ ausgenommen:
       abschnitte:                   # von Hand, ohne passendes OSM-Objekt (Abgleich hejfish/vor Ort)
         - {km: [61.53, 61.70], ufer: Süd, grund: befestigter Umschlagplatz Rendsburg/Osterrönfeld}
         - {km: [95.36, 96.51], ufer: Süd, grund: Umschlag-/Industrieufer Kiel-Wik bis vor die Olympiabrücke (wie hejfish)}
+        # Zufahrt Obereider: Südufer (Band nennt es "Nord") vom Hafen bis zur Ecke am NOK, wie hejfish
+        - {gewaesser: Zufahrt-Obereider, km: [65.40, 65.75], ufer: Nord, bei: [[54.31193, 9.7030], [54.3120, 9.7062], [54.3121, 9.7094]],
+           grund: Rendsburger Hafen Südufer}
       frei:                         # von Hand frei, obwohl ein OSM-Objekt das Ufer berührt
         - {km: [61.70, 61.735], ufer: Nord, grund: Kreishafen Rendsburg, Wechsel der Uferbefestigung erst bei km 61,735}
-        - {km: [63.10, 63.414], ufer: Nord, grund: Saatsee-Werft, Kanalufer westlich der Hafeneinfahrt (wie hejfish)}
+        - {km: [63.00, 63.17], ufer: Nord, grund: Saatsee-Werft, Kanalufer bis zur Molenwurzel (wie hejfish)}
         - {km: [64.08, 64.20], ufer: Nord, grund: Saatsee-Werft, OSM-Fläche reicht über den Hafen hinaus (wie hejfish)}
         - {gewaesser: Borgstedter-See, km: [2.70, 2.86], ufer: Süd, grund: Borgstedter Enge, Hafen Rader Insel liegt gegenüber}
         - {gewaesser: Borgstedter-See, km: [2.70, 2.855], ufer: Nord, grund: Brücke Borgstedter Enge, rot erst ab dem Hafen (wie hejfish)}
