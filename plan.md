@@ -36,7 +36,7 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
       61,70–61,89 Steinpackung grün (Atlas ohne blaue Linie, `UFER_ERGAENZT`), Ersatzfähre
       way/448796387 (nur bei Bauarbeiten/Events) zählt nicht als Fähranlage
 - [x] Eider-Ufer nördlich vom Kanal (km 55,5–60) nicht einfärben, eigener Erlaubnisschein
-      (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); Flemhuder See ganz ohne Uferfarben (`FREMDE_GEWAESSER`)
+      (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); Flemhuder See ganz ohne Uferfarben (`FREMDE_GEWAESSER`, im Kanalblatt 83-86 `FREMDE_UFERPUNKTE`)
 - [x] `frei` in `rules.yaml`: von Hand freie Stücke trotz OSM-Objekt (Kreishafen Nord bis km 61,735, Saatsee-Werft
       nur km 63,414–64,08 wie hejfish)
 - [ ] Gescannte Bände: Tiefenfarben noch in Originallegende (keine Koten im PDF)

@@ -143,6 +143,8 @@ NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer
 # Ufer fremder Gewässer, die ein Band mitzeichnet (eigener Erlaubnisschein): Gewässer, km von–bis (Median
 # der Linie), Seite, Achsabstand (Median) darüber fällt die ganze Linie weg.
 FREMDE_UFER = [("NOK", 55.5, 60.0, "Nord", 118)]            # Eider nördlich vom Kanal (Kanalufer ≤ 112 m, Eider ≥ 121 m)
+# wie FREMDE_UFER, aber je Punkt (Kanal- und See-Ufer in einer Linie): Punkte über dem Achsabstand fallen weg
+FREMDE_UFERPUNKTE = [("NOK", 85.15, 85.40, "Süd", 120)]     # Einfahrt Flemhuder See (Kanalufer dort ≤ 113 m)
 FREMDE_GEWAESSER = {"Flemhuder-See"}   # eigener Erlaubnisschein: Band ganz ohne Uferfarben (Kanalufer zählen zum NOK)
 # Ufer, die der Atlas ohne blaue Linie zeichnet (Kaimauer, Steinpackung): (km von, bis), Linie lon/lat.
 # Wird jedem Kanalblatt gegeben, dessen km-Bereich sie berührt; jedes behält seinen Teil.
@@ -206,6 +208,9 @@ class Sheet:
                 k, sd, dm = np.median(km[keep]), side[keep][0], np.median(d[keep])
                 if any(g == self.group and a <= k <= b and sd == u and dm > m for g, a, b, u, m in FREMDE_UFER):
                     keep[:] = False
+            for g, a, b, u, m in FREMDE_UFERPUNKTE:
+                if g == self.group:
+                    keep &= ~((km >= a) & (km <= b) & (side == u) & (d > m))
             if self.exclude is not None:   # Kanalufer, die ein See-Band mitzeichnet, gehören zum NOK
                 keep &= self.exclude.query(Q)[0] > NOK_OVERLAP_M
             yield Q, km, side, keep
