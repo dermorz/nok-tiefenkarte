@@ -24,6 +24,7 @@ app:                  ## nur App-Hülle (web/) nach site/ kopieren
 	$(PY) tiles.py --app
 
 test: node_modules
+	python3 -I tests/test_elwis.py
 	CHROMIUM=$$(command -v chromium) npx playwright test
 
 node_modules:

@@ -17,8 +17,7 @@ from pyproj import Transformer
 from scipy import interpolate, ndimage, optimize
 
 Image.MAX_IMAGE_PIXELS = None
-PAGE = "https://www.elwis.de/DE/Service/Tiefenatlas-BWaStr/Nord-Ostsee-Kanal/Nord-Ostsee-Kanal-node"
-UA = {"User-Agent": "nok-tiefenkarte/1.0"}
+from elwis import AUSGELASSEN, PAGE, UA, names as elwis_names
 PDF_DIR, OUT = Path("data/pdf"), Path("out")
 PT = 0.0254 / 72            # m pro pt bei 1:1
 DPI = 170                   # 1:2000 -> 0,30 m/px; Text bleibt bei 1:1000/1:3000 gleich lesbar
@@ -28,17 +27,12 @@ UTM = Transformer.from_crs(25832, 4326, always_xy=True)
 TO_UTM = Transformer.from_crs(4326, 25832, always_xy=True)
 
 
-AUSGELASSEN = ("Flemhuder-See",)   # Bände, die nicht in die Karte kommen (eigener Erlaubnisschein, nicht gebraucht)
-
-
 # --------------------------------------------------------------------------- download
 def fetch():
     PDF_DIR.mkdir(parents=True, exist_ok=True)
     page = requests.get(PAGE, headers=UA, timeout=60)
     page.raise_for_status()
-    content = page.text[page.text.find('id="content"'):]  # ohne Navigation/Archiv-Teaser
-    names = [html.unescape(m).split("?")[0].rsplit("/", 1)[1]
-             for m in re.findall(r'<a class="[^"]*Publication[^"]*" href="([^"]*)"', content)]
+    names = elwis_names(page.text)
     if not names:
         sys.exit("keine PDF-Links gefunden – Seitenstruktur geändert?")
     for old in PDF_DIR.glob("*.pdf"):

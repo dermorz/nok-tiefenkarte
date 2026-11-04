@@ -1,0 +1,27 @@
+# Wöchentlich: neuer Tiefenatlas-Stand auf ELWIS? -> Issue (Label "elwis") öffnen bzw. aktualisieren. Baut nichts.
+name: ELWIS-Stand prüfen
+on:
+  schedule: [{ cron: "17 6 * * 1" }]   # montags 06:17 UTC
+  workflow_dispatch:
+permissions: { contents: read, issues: write }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ELWIS mit veröffentlichtem Stand vergleichen
+        id: check
+        run: |
+          set +e; python3 -I elwis.py > report.md; code=$?; set -e
+          cat report.md
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          [ "$code" -le 2 ]
+      - name: Issue öffnen/aktualisieren
+        if: steps.check.outputs.code != '0'
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          title=$([ "${{ steps.check.outputs.code }}" = 1 ] && echo "Neuer Tiefenatlas-Stand auf ELWIS" || echo "ELWIS-Seite nicht mehr lesbar")
+          gh label create elwis --color 0b6fa4 --description "Tiefenatlas-Stand auf ELWIS" 2>/dev/null || true
+          n=$(gh issue list --label elwis --state open --search "in:title \"$title\"" --json number --jq '.[0].number')
+          if [ -n "$n" ]; then gh issue edit "$n" --body-file report.md
+          else gh issue create --title "$title" --label elwis --body-file report.md; fi

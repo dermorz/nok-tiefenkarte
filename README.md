@@ -67,6 +67,9 @@ mobiler Viewport, simulierte Geolocation).
   Atlas nicht zeichnet (Rendsburger Hafen, Schirnau), als `extra_ufer` aus dem Rand einer OSM-Wasserfläche. Farbe
   wird in der App nach dem aktuellen Datum bestimmt (`?datum=JJJJ-MM-TT` zum Prüfen); Ausnahmen mit Zeitraum außerhalb davon gelb.
 
+Neuer ELWIS-Stand: die GitHub Action `.github/workflows/elwis.yml` prüft montags (`elwis.py`) und öffnet
+bei Änderungen ein Issue mit Label `elwis`.
+
 Veröffentlichen: `make deploy` (GitHub Pages, Branch `gh-pages` wird jedes Mal ersetzt).
 
 Offene Punkte: [Issues](https://github.com/dermorz/nok-tiefenkarte/issues).
