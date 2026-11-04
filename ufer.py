@@ -9,7 +9,7 @@ PDF-Ebenen (geprüft an NOK-74-76, Borgstedter See): Uferlinie = hellblau (0.286
 Kanalachse = dunkelblau (0, 0, 0.753); km-Linien = Beschriftung "dd,ddd" je Ufer.
 """
 import argparse, json, math, re, sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import numpy as np
@@ -400,6 +400,9 @@ def cmd_build(a):
         nicht_kartierbar=[flat[k]["text"] for k in flat if flat[k]["typ"] == "nicht_kartierbar"],
         allgemein=rules.get("allgemein", []), offen=open_, osm_abgerufen=osm.get("_abgerufen")),
         ensure_ascii=False, indent=1))
+    idx = Path("site/index.json")   # neuer Datenstand, sonst liefert der Service Worker alte Uferlinien (?v=)
+    if idx.exists():
+        idx.write_text(json.dumps(json.loads(idx.read_text()) | dict(version=datetime.now().strftime("%Y%m%d%H%M"))))
     print("nicht (noch) gezeichnet:", ", ".join(open_) or "–")
 
 
