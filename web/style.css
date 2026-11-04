@@ -102,3 +102,5 @@ body.angel .leaflet-top.leaflet-right { top: calc(env(safe-area-inset-top) + 150
 .legend { list-style: none; padding: 0; margin: 0; columns: 2; font-size: 14px; }
 .legend li { display: flex; align-items: center; gap: 8px; break-inside: avoid; }
 .legend i { width: 28px; height: 14px; border: 1px solid var(--line); }
+.warnbox { padding: 8px 12px; border-left: 4px solid var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); border-radius: 6px; }
+#angel-note strong { display: block; }

@@ -125,7 +125,9 @@ function shoreInfo(p) {
   const q = app.rules.quelle;
   return `<span class="big" style="color:${COLORS[st]}">${head}</span><div class="muted">${km} · Stand ${q.schein}, ${q.abgerufen}` +
     `${new URLSearchParams(location.search).get("datum") ? ` · Prüfdatum ${d.toLocaleDateString("de-DE")}` : ""}</div>${rules}` +
-    `<div class="muted">Nicht kartiert: Baustellen, Lebendverbau, Abbruchufer, Fischereianlagen, Pachtflächen. Maßgeblich ist der Erlaubnisschein.</div>`;
+    `<div class="muted">Nicht kartiert: Baustellen, Lebendverbau, Abbruchufer, Fischereianlagen, Pachtflächen.</div>` +
+    `<div class="muted"><strong>Nicht verbindlich</strong>, Fehler möglich – selbst prüfen, maßgeblich ist der Erlaubnisschein. ` +
+    `Fehler melden: <a href="mailto:nok@morz.me">nok@morz.me</a></div>`;
 }
 async function loadShores() {
   if (!app.angel || app.map.getZoom() < 12) return;
