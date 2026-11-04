@@ -140,6 +140,9 @@ def utm(lonlat):
 
 
 NOK_OVERLAP_M = 12   # See-Ufer näher als das an einem Kanal-Ufer -> Kanal-Ufer (Kanalblatt zählt)
+# Ufer fremder Gewässer, die Kanalblätter mitzeichnen (eigener Erlaubnisschein): km von–bis, Seite,
+# Linien mit Achsabstand (Median) darüber fallen weg. Kanalufer dort ≤ 112 m, Eider ≥ 121 m.
+FREMDE_UFER = [(55.5, 60.0, "Nord", 118)]   # Eider nördlich vom Kanal (Breiholz–Schülp)
 
 
 class Sheet:
@@ -181,7 +184,7 @@ class Sheet:
         km = self.akm[j] + tc[i, j] * (self.akm[j + 1] - self.akm[j])
         cross = AB[j, 0] * (P[:, 1] - A[j, 1]) - AB[j, 1] * (P[:, 0] - A[j, 0])
         side = np.where(cross > 0, self.left, "Süd" if self.left == "Nord" else "Nord")
-        return km, side
+        return km, side, dist[i, j]
 
     def shores(self, step=2.0):
         """Uferlinien verdichtet (≤ step m), mit km/Seite, auf den eigenen km-Bereich beschnitten."""
@@ -193,8 +196,12 @@ class Sheet:
                 k = max(1, int(math.ceil(s / step)))
                 Q += [p0 + (p1 - p0) * (i / k) for i in range(1, k + 1)]
             Q = np.array(Q)
-            km, side = self.locate(Q)
+            km, side, d = self.locate(Q)
             keep = (km >= self.lo) & (km < self.hi)
+            if self.group == "NOK" and keep.any():
+                k, sd, dm = np.median(km[keep]), side[keep][0], np.median(d[keep])
+                if any(a <= k <= b and sd == u and dm > m for a, b, u, m in FREMDE_UFER):
+                    keep[:] = False
             if self.exclude is not None:   # Kanalufer, die ein See-Band mitzeichnet, gehören zum NOK
                 keep &= self.exclude.query(Q)[0] > NOK_OVERLAP_M
             yield Q, km, side, keep

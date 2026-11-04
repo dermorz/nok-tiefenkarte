@@ -32,6 +32,11 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
   - Gieselaukanal und Flemhuder See: bei hejfish orange („nur mit eigenem Erlaubnisschein“), bei uns rot
   - laut hejfish-Seitentext gesperrt bis zur Instandsetzung: barrierefreie Angelplätze Weiche Kudensee und
     Oldenbüttel (Gieselau-Mündung) – fehlt in `rules.yaml`
+- [ ] Uferlücke km 61,70–61,89 Süd (Kreishafen Rendsburg, Osterrönfeld): Atlas zeichnet die Kaimauer ohne
+      blaue Uferlinie, daher dort keine Farbe; Umschlagstelle -> sollte rot sein. Lösung: Kaikante aus
+      OSM oder aus der Tiefenflächen-Kante ergänzen
+- [x] Eider-Ufer nördlich vom Kanal (km 55,5–60) nicht einfärben, eigener Erlaubnisschein
+      (`FREMDE_UFER` in `ufer.py`, über den Achsabstand)
 - [ ] Gescannte Bände: Tiefenfarben noch in Originallegende (keine Koten im PDF)
 - [ ] Flemhuder See: Bezugshorizont PN 5,00 m statt 4,80 m wie im Kanal – Tiefen 0,2 m anders bezogen
 - [ ] Kanalfähre Brunsbüttel: Anleger landen bei km 2,02 (Nord) und 2,40 (Süd) – OSM-Linie prüfen
