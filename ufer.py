@@ -355,12 +355,13 @@ def resolve(rules, sheets, osm):
     """Regeln -> Intervalle (rule_id, gruppe, seiten, km_lo, km_hi) + Protokoll."""
     iv, log, open_, frei = [], [], [], []
     def bei(st, d):
-        """Linie durch st["bei"] (lat, lon), verdichtet -> (Baum, Radius m); None ohne bei."""
+        """Linie(n) durch st["bei"] (lat, lon), verdichtet -> (Baum, Radius m, bei_m überschreibt); None ohne bei."""
         if "bei" not in st:
             return None
-        B = utm([q[::-1] for q in st["bei"]])
-        B = np.vstack([a + (b - a) * t for a, b in zip(B[:-1], B[1:]) for t in np.linspace(0, 1, 30)])
-        return cKDTree(B), d
+        lines = st["bei"] if isinstance(st["bei"][0][0], list) else [st["bei"]]   # eine oder mehrere Linien
+        B = [utm([q[::-1] for q in ln]) for ln in lines]
+        B = np.vstack([a + (b - a) * t for L in B for a, b in zip(L[:-1], L[1:]) for t in np.linspace(0, 1, 30)])
+        return cKDTree(B), st.get("bei_m", d)
     shore_cache = {s.id: list(s.shores()) for s in sheets}
     # alle gültigen Uferpunkte flach (für Objektregeln): Punkt, Gewässer, Seite, km
     flat = [(Q[keep], [s.group] * int(keep.sum()), sd[keep], km[keep])

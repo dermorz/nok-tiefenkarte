@@ -140,6 +140,16 @@ einschraenkungen:
     zeitraum: {von: "03-01", bis: "05-31"}   # Zanderschonzeit laut Schein
     anzeige: "Kunstköderverbot (außer Heringspaternoster)"
 
+  - id: gieselaukanal                # ergänzt: wie hejfish orange statt rot (anderes Gewässer, eigener Schein)
+    text: "Gieselaukanal: nicht Teil dieses Erlaubnisscheins, eigener Erlaubnisschein nötig"
+    typ: ort
+    anzeige: "Eigener Erlaubnisschein nötig"
+    geometrie:
+      abschnitte:                   # Mündung von Norden bei km 40,7; Linien an West- und Ostufer, Ufer ≤ 15 m
+        - {km: [40.5, 40.9], ufer: Nord, bei_m: 15, grund: Gieselaukanal,
+           bei: [[[54.17524, 9.44145], [54.17419, 9.4423], [54.17381, 9.44245], [54.17349, 9.4422], [54.17342, 9.4420]],
+                 [[54.17548, 9.4421], [54.17416, 9.44315], [54.17399, 9.4435], [54.17394, 9.4440]]]}
+
   - id: verpachtete_flaechen
     text: "In Bereichen der von der WSV verpachteten oder vermieteten Land- und Wasserflächen ist die Fischereiausübung nur mit Einwilligung des Pächters oder Mieters gestattet."
     typ: nicht_kartierbar
