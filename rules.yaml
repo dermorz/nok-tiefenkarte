@@ -63,7 +63,7 @@ ausgenommen:
         - {km: [63.00, 63.17], ufer: Nord, grund: Saatsee-Werft, Kanalufer bis zur Molenwurzel (wie hejfish)}
         - {km: [63.17, 63.45], ufer: Nord, grund: Saatsee-Werft, Kanalseite der Mole bis zur Spitze (wie hejfish), Beckenseite bleibt rot,
            bei: [[54.2955889, 9.6897374], [54.2958701, 9.6911108], [54.2962024, 9.6924192], [54.2963147, 9.6928478],
-                 [54.2963758, 9.6930505], [54.2964478, 9.6931461], [54.2965458, 9.6931442]]}
+                 [54.2963758, 9.6930505]]}
         - {km: [64.08, 64.20], ufer: Nord, grund: Saatsee-Werft, OSM-Fläche reicht über den Hafen hinaus (wie hejfish)}
         - {gewaesser: Borgstedter-See, km: [2.70, 2.86], ufer: Süd, grund: Borgstedter Enge, Hafen Rader Insel liegt gegenüber}
         - {gewaesser: Borgstedter-See, km: [2.70, 2.855], ufer: Nord, grund: Brücke Borgstedter Enge, rot erst ab dem Hafen (wie hejfish)}

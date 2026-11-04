@@ -25,37 +25,21 @@ Stand: 03.11.2026. Später als GitHub-Issues anlegen.
       als Vergleich, Geometrie nicht übernommen): Fährbuchten ± 90 m, Stege, Hafen-/Werftflächen und Häfen
       Brunsbüttel aus OSM. Rote hejfish-Strecken im Geltungsbereich zu 74 % abgedeckt.
 - [ ] Angeln, Rest-Abweichungen zu hejfish (prüfen, ob der Schein das hergibt):
-  - bei hejfish rot, bei uns nicht: Brunsbüttel Süd km 1,7–2,4 (Schleuse/Fähre); km 61,5–61,7 Süd und
-    70,17 Nord (kurz); km 85,55–85,68 Süd
-  - bei uns rot, bei hejfish nicht: kleine Stege (~30 Stellen, je ~100 m), z. B. Borgstedter See Nord km
-    2,2/2,5, Flemhuder See; Anlegebrücken sind laut Schein ausgenommen
-  - Dückerswisch: hejfish km 20,55–20,91, Schein sagt 20,45–20,80 (wir folgen dem Schein)
-  - Gieselaukanal: bei hejfish orange („nur mit eigenem Erlaubnisschein“), bei uns rot
-  - laut hejfish-Seitentext gesperrt bis zur Instandsetzung: barrierefreie Angelplätze Weiche Kudensee und
-    Oldenbüttel (Gieselau-Mündung) – fehlt in `rules.yaml`
-- [x] Rendsburg Süd wie hejfish: km 61,53–61,70 befestigter Umschlagplatz rot (`abschnitte` in `rules.yaml`),
-      61,70–61,89 Steinpackung grün (Atlas ohne blaue Linie, `UFER_ERGAENZT`), Ersatzfähre
-      way/448796387 (nur bei Bauarbeiten/Events) zählt nicht als Fähranlage
-- [x] Borgstedter See/Enge wie hejfish: Rot von A7 bzw. Leitung bis Nord km 0,34 / Süd km 0,31; an der Enge nur der
-      Hafen Rader Insel rot, private Stege Borgstedt grün (`ausser`, `frei` mit `gewaesser`)
-- [x] Objektregeln färben nur Ufer nahe am Objekt (vorher: jedes Ufer mit gleichem km und gleicher Seite, z. B.
-      Südspitze Rader Insel)
-- [x] Extra-Uferlinien aus OSM-Wasserflächen (`extra_ufer` in `rules.yaml` -> `site/ufer/extra.geojson`, immer
-      geladen): Rendsburger Hafen rot, Westufer Obereider bis Borgstedter Brücke grün; Südufer der Zufahrt rot
-- [x] Saatsee-Werft wie hejfish: ganzes Becken rot, Kanalufer bis zur Molenwurzel grün
-- [x] Flemhuder See ganz aus der Karte (`AUSGELASSEN` in `build.py`)
-- [x] Ost-Ende Kiel-Holtenau wie hejfish: Süd km 95,36–96,51 rot (von Hand), Olympiabrücke–Schleuse
-      (km 96,63–97,95) beide Ufer rot (`kiel_holtenau`, `geltungsbereich.auch` statt grau)
-- [x] Eider-Ufer nördlich vom Kanal (km 55,5–60) nicht einfärben, eigener Erlaubnisschein
-      (`FREMDE_UFER` in `ufer.py`, über den Achsabstand); Flemhuder See ganz ohne Uferfarben (`FREMDE_GEWAESSER`, im Kanalblatt 83-86 `FREMDE_UFERPUNKTE`)
-- [x] `frei` in `rules.yaml`: von Hand freie Stücke trotz OSM-Objekt (Kreishafen Nord bis km 61,735, Saatsee-Werft
-      nur km 63,414–64,08 wie hejfish)
-- [ ] Flemhuder See: Bezugshorizont PN 5,00 m statt 4,80 m wie im Kanal – Tiefen 0,2 m anders bezogen
-- [ ] Kanalfähre Brunsbüttel: Anleger landen bei km 2,02 (Nord) und 2,40 (Süd) – OSM-Linie prüfen
-- [ ] Werft Saatsee: eigene km-Teilung oder Kanal-km? (derzeit eigene)
+  - bei hejfish rot, bei uns nicht: Brunsbüttel Süd km 1,7–2,4 (Schleuse/Fähre); km 85,55–85,68 Süd
+  - laut hejfish-Seitentext gesperrt bis zur Instandsetzung: barrierefreier Angelplatz Weiche Kudensee
+    und Oldenbüttel (Gieselau-Mündung) – fehlt in `rules.yaml`
+- [x] Stege nur als Bauwerk rot (eigene OSM-Linie), Ufer davor grün; Stege in roten Hafenflächen nicht extra
+- [x] Dückerswisch: ganze westliche Ausbuchtung bis km 20,98 (statt Schein 20,45–20,80), Kanalseite der Mole frei
+- [x] Gieselaukanal orange („Eigener Erlaubnisschein nötig“, wie hejfish)
+- [x] Extra-Uferlinien aus OSM: Rendsburger Hafen, Westufer Obereider, Schirnau Nord km 70,18–70,74
+- [x] Abgeschnittene Tiefenkoten am Blattrand („11,1“ -> „1,1“) verworfen (`build.drop_cut`)
 - [ ] Update-Ablauf bei neuem ELWIS-Stand: `make all`, neu veröffentlichen; App bietet für offline
       gespeicherte Abschnitte „Aktualisieren“ an. Ablauf dokumentieren/automatisieren
       (z. B. regelmäßiger Check der ELWIS-Seite auf neue Bände).
+
+## Vielleicht
+- [ ] Tiefenzahlen per Schalter ein-/ausblenden: Koten aus dem PDF entfernen, eigene transparente
+      Kachelebene nur mit den Zahlen (Scans: Zahlen im Bild, dort nicht ohne Weiteres)
 
 ## Zuletzt
 - [ ] Dunkelmodus überarbeiten: Karte wird derzeit invertiert (Tiefenfarben werden dunkel).
