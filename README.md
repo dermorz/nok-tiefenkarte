@@ -52,6 +52,8 @@ Bei einem neuen Stand auf ELWIS werden ersetzte PDFs automatisch gelöscht und d
 
 ## Web-App
 
+Live: <https://dermorz.github.io/nok-tiefenkarte/>
+
 Statische App in `web/` (Leaflet im Repo, keine Drittserver außer der optionalen Hintergrundkarte
 basemap.de). `make ufer web` baut `site/`: Kacheln `tiles/plan/{z}/{x}/{y}.webp` (z10–19, Papierweiß
 transparent; reine Bildlayer ohne Tiefendaten), Uferlinien `ufer/<blatt>.geojson`, Offline-Manifeste
