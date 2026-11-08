@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d5c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111417" media="(prefers-color-scheme: dark)">
+<title>NOK Tiefenkarte</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="NOK Tiefen">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="style.css">
+<script>try { const t = JSON.parse(localStorage.getItem("theme")); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+</head>
+<body>
+<div id="map" aria-label="Karte"></div>
+
+<div id="top">
+<header id="where" role="status" aria-live="polite">Lade Abschnitte …</header>
+
+<section id="readout" role="status" aria-live="polite" hidden></section>
+
+<aside id="angel-note" hidden>
+  <span class="g">■</span> nicht ausgenommen <span class="r">■</span> ausgenommen <span class="o">■</span> Einschränkung <span class="y">■</span> zeitweise ausgenommen<span id="angel-date"></span><br>
+  <strong>Nicht verbindlich, nur zur groben Orientierung – selbst prüfen!</strong>
+  <span class="muted">Fehler möglich. Nicht kartiert: Baustellen, Lebendverbau, Abbruchufer, Fischereianlagen, Pachtflächen. Maßgeblich ist der Erlaubnisschein.</span>
+</aside>
+</div>
+
+<nav id="bar">
+  <button id="btn-follow" aria-pressed="false" title="Eigene Position folgen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="8" fill="none"/></svg>
+    <span>Folgen</span>
+  </button>
+  <button id="btn-measure" aria-pressed="false" title="Entfernung messen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z" fill="none"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg>
+    <span>Messen</span>
+  </button>
+  <button id="btn-list" title="Abschnitte">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <span>Abschnitte</span>
+  </button>
+  <button id="btn-angel" aria-pressed="false" title="Uferlinie nach Angelerlaubnis">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v10a4 4 0 0 0 8 0v-2" fill="none"/><path d="m13 13 2-2 2 2" fill="none"/><circle cx="7" cy="3" r="1"/></svg>
+    <span>Angeln</span>
+  </button>
+  <button id="btn-info" title="Hinweise und Quellen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none"/><path d="M12 11v6M12 7v.5"/></svg>
+    <span>Info</span>
+  </button>
+</nav>
+
+<dialog id="dlg-list">
+  <div class="dlg-head"><h2>Abschnitte</h2><button class="close" aria-label="Schließen">✕</button></div>
+  <label class="row-check"><input type="checkbox" id="chk-base"> Hintergrundkarte (basemap.de, nur online)</label>
+  <label class="row-check">Darstellung
+    <select id="sel-theme"><option value="">Automatisch (System)</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
+  <p id="quota" class="muted"></p>
+  <div id="sections"></div>
+</dialog>
+
+<dialog id="dlg-info">
+  <div class="dlg-head"><h2>Hinweise</h2><button class="close" aria-label="Schließen">✕</button></div>
+  <p><strong>Nicht zur Navigation.</strong> Die Karten geben die Situation zum Zeitpunkt der Messung wieder.
+    Für Richtigkeit und Vollständigkeit wird keine Gewähr übernommen.</p>
+  <h3>Über diese Karte</h3>
+  <p>Die Tiefenkarten der WSV (ELWIS-Tiefenatlas) gibt es nur als einzelne PDFs. Diese Seite setzt alle Blätter
+    zu einer durchgehenden Karte des Nord-Ostsee-Kanals zusammen, mit einheitlichen Tiefenfarben, und die
+    Abschnitte lassen sich offline speichern. Der Angel-Layer zeigt, an welchen Ufern der LAV-Jahresschein das
+    Angeln erlaubt.</p>
+  <h3>So geht's</h3>
+  <ul>
+    <li><strong>Folgen:</strong> Die Karte folgt deinem Standort, oben steht der Kanal-km.</li>
+    <li><strong>Messen:</strong> Ziel antippen, du bekommst die Entfernung von deiner Position. Ohne GPS zwei Punkte antippen.</li>
+    <li><strong>Abschnitte:</strong> Hier speicherst du Abschnitte für unterwegs ohne Netz. Dort schaltest du auch
+      die Hintergrundkarte und Hell/Dunkel um.</li>
+    <li><strong>Angeln:</strong> Blendet die farbigen Uferlinien ein. Eine Linie antippen zeigt die Regel und den Zeitraum.</li>
+    <li><strong>Kein Ersatz:</strong> Die Karte ersetzt weder die amtliche Seekarte noch den Erlaubnisschein.</li>
+  </ul>
+  <div id="install" hidden>
+    <p>Als App auf dem Home-Bildschirm: Vollbild, offline, Display bleibt beim Folgen an.</p>
+    <button id="btn-install" class="primary">Als App installieren</button>
+    <p id="install-ios" class="muted" hidden>Auf dem iPhone/iPad in Safari: <strong>Teilen</strong> (□↑) →
+      <strong>„Zum Home-Bildschirm“</strong>. Offline-Abschnitte danach in der App neu speichern.</p>
+  </div>
+  <h3>Tiefe unter SKN</h3>
+  <ul id="legend" class="legend"></ul>
+  <p class="muted">Einheitliche Skala für alle Blätter: Tiefe aus den Tiefenkoten des Plans interpoliert.
+    Bei den gescannten Blättern NOK-37-39 und NOK-86-88 sind die Koten maschinell gelesen.</p>
+  <h3>Quellen und Lizenzen</h3>
+  <p>Tiefenatlas Bundeswasserstraße Nord-Ostsee-Kanal, Wasserstraßen- und Schifffahrtsverwaltung des Bundes
+    (WSV), <a href="https://www.elwis.de/DE/Service/Tiefenatlas-BWaStr/Nord-Ostsee-Kanal/Nord-Ostsee-Kanal-node" target="_blank" rel="noopener">ELWIS</a>,
+    <a href="https://www.govdata.de/dl-de/zero-2-0" target="_blank" rel="noopener">Datenlizenz Deutschland – Zero – Version 2.0</a>.
+    <br><em>Die Daten wurden verändert:</em> aus den PDF-Plänen georeferenziert, nach Web-Mercator umprojiziert,
+    gekachelt, Papierweiß transparent gemacht, Tiefenflächen aus den Koten einheitlich neu eingefärbt. Dabei können Lagefehler (typisch &lt; 0,5 m) und Auslassungen entstehen.</p>
+  <p>Hintergrundkarte: © GeoBasis-DE / BKG (<span id="bkg-year"></span>)
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, basemap.de.</p>
+  <h3>Angel-Layer</h3>
+  <p class="warnbox">Die Ufereinfärbung ist <strong>nicht verbindlich</strong> und dient nur der groben Orientierung; Fehler sind möglich. Prüfe immer selbst anhand des gültigen Erlaubnisscheins und der Lage vor Ort, ob du dort angeln darfst. Hinweise auf Fehler gern an <a href="mailto:nok@morz.me">nok@morz.me</a> oder als <a href="https://github.com/dermorz/nok-tiefenkarte/issues" target="_blank" rel="noopener">GitHub-Issue</a>.</p>
+  <p>Uferlinien aus dem Tiefenatlas, eingefärbt nach den Regeln des Erlaubnisscheins
+    (<span id="rules-src"></span>). Grenzpunkte und Objekte teils aus OpenStreetMap: Fähren, Stege, Hafen- und Werftflächen, Brücken, Freileitungen,
+    © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a>,
+    <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">ODbL</a>
+    (abgerufen <span id="osm-date"></span>).</p>
+  <p>Nicht kartiert (immer selbst prüfen):</p><ul id="rules-unmapped"></ul>
+  <p>Allgemein:</p><ul id="rules-general"></ul>
+  <p>Kartenbibliothek: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a> (BSD-2-Clause).</p>
+  <h3>Kontakt und Datenschutz</h3>
+  <p>Privates, nicht kommerzielles Projekt. Kontakt: <a href="mailto:nok@morz.me">nok@morz.me</a>,
+    Quelltext: <a href="https://github.com/dermorz/nok-tiefenkarte" target="_blank" rel="noopener">GitHub</a>.</p>
+  <p>Kein Tracking, keine Cookies. Gehostet bei GitHub Pages (GitHub Inc.); GitHub verarbeitet beim Abruf
+    technisch nötige Daten wie die IP-Adresse
+    (<a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Datenschutzerklärung von GitHub</a>).
+    Die Hintergrundkarte wird direkt von basemap.de (Bundesamt für Kartographie und Geodäsie) geladen; dabei
+    erhält das BKG Ihre IP-Adresse. Offline gespeicherte Abschnitte, Standort und Einstellungen bleiben nur
+    in Ihrem Browser und werden nicht übertragen.</p>
+  <p class="muted">Datenstand: <span id="data-version"></span></p>
+</dialog>
+
+<dialog id="dlg-first">
+  <h2>Nicht zur Navigation</h2>
+  <p>Diese Karte bereitet den Tiefenatlas der WSV auf. Sie zeigt die Situation zum Zeitpunkt der jeweiligen
+    Messung, ohne Gewähr für Richtigkeit und Vollständigkeit.</p>
+  <p>Die Ufereinfärbung ist <strong>nicht verbindlich</strong> und dient nur der groben Orientierung; Fehler sind möglich. Prüfe immer selbst anhand des gültigen Erlaubnisscheins und der Lage vor Ort, ob du dort angeln darfst. Hinweise auf Fehler gern an <a href="mailto:nok@morz.me">nok@morz.me</a> oder als <a href="https://github.com/dermorz/nok-tiefenkarte/issues" target="_blank" rel="noopener">GitHub-Issue</a>.</p>
+  <form method="dialog"><button class="primary">Verstanden</button></form>
+</dialog>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

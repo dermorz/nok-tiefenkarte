@@ -1,0 +1,4 @@
+{ "name": "NOK Tiefenkarte", "short_name": "NOK Tiefen", "start_url": "./", "display": "standalone",
+  "background_color": "#111417", "theme_color": "#0b3d5c",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }] }
