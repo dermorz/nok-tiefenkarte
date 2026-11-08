@@ -7,7 +7,7 @@ import argparse, html, json, re, sys, urllib.request
 
 PAGE = "https://www.elwis.de/DE/Service/Tiefenatlas-BWaStr/Nord-Ostsee-Kanal/Nord-Ostsee-Kanal-node"
 UA = {"User-Agent": "nok-tiefenkarte/1.0"}
-SITE = "https://dermorz.github.io/nok-tiefenkarte/"
+SITE = "https://nok.morz.me/"
 AUSGELASSEN = ("Flemhuder-See",)   # Bände, die nicht in die Karte kommen (eigener Erlaubnisschein, nicht gebraucht)
 
 
